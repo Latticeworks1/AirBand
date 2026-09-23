@@ -1,0 +1,47 @@
+name: Windows release build
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to attach the build to (e.g. v1.0.0)"
+        required: true
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DAIRBAND_COPY_AFTER_BUILD=OFF
+
+      - name: Build VST3
+        run: cmake --build build --config Release --target AirBand_VST3 -j 4
+
+      - name: Package
+        shell: bash
+        run: |
+          VERSION=$(grep -m1 'project(AirBand VERSION' CMakeLists.txt | sed -E 's/.*VERSION ([0-9.]+).*/\1/')
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          DIST="dist/AirBand-${VERSION}-windows"
+          mkdir -p "$DIST"
+          cp -R "build/AirBand_artefacts/Release/VST3/AirBand.vst3" "$DIST/"
+          cp README.md "$DIST/" || true
+          cd dist
+          7z a "AirBand-${VERSION}-windows.zip" "AirBand-${VERSION}-windows"
+
+      - name: Upload to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          TAG="${{ github.event.inputs.tag }}"
+          if [ -z "$TAG" ]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+          fi
+          gh release upload "$TAG" "dist/AirBand-${VERSION}-windows.zip" --clobber --repo "${{ github.repository }}"
