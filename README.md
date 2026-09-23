@@ -1,50 +1,93 @@
 # AirBand
 
-A two-band parallel companding effect modelled on the mid-1970s "encoder-only"
-Dolby A hack: two bands of the noise-reduction encoder (bands 3 and 4, high-passed
-at roughly 3 kHz and 9 kHz) run their companding action, and the result is left
-encoded rather than decoded. Because encode-only companding boosts quiet
-high-frequency content while leaving loud high-frequency content close to
-unity, the result reads as a dynamic treble lift rather than a static shelf or
-a harmonic exciter.
+AirBand is an audio effect plugin that recreates the "encoder-only" Dolby A
+hack: two bands of a 1970s noise-reduction encoder, run without their
+matching decoder, used purely for their side effect of dynamic treble
+lift.
+
+> [!WARNING]
+> There are no signed or notarized builds. Downloads are ad-hoc signed only
+> (no Apple Developer ID on the build machine), so macOS will quarantine the
+> plugin on first launch on any Mac other than the one it was built on. See
+> [Installing](#installing) to clear it. Only macOS is supported; there is no
+> Windows or Linux build.
+
+## How it works
+
+Two of the four bands in a Dolby A encoder are high-pass filtered (roughly
+3 kHz and 9 kHz) and run through the encoder's companding action, which
+boosts quiet high-frequency content while leaving loud high-frequency
+content close to unity gain. Normally that companded signal is summed with
+a matching decoder to cancel the boost back out. Leaving it undecoded and
+summing it back with the dry signal instead produces a treble lift that
+tracks program level rather than a static shelf or a harmonic exciter.
+AirBand implements that same two-band, level-dependent companding directly,
+without emulating the rest of the Dolby A signal path.
 
 ## Controls
 
 - **Mid Air** — boost applied to quiet content in the ~3 kHz-and-up band, 0-15 dB.
 - **High Air** — boost applied to quiet content in the ~9 kHz-and-up band, 0-15 dB.
 - **Air Blend** — how much of the processed bands is summed back with the dry
-  signal, 0-100%. The historical hardware mod ran in the 16-22% range.
+  signal, 0-100%. The original hardware mod ran in the 16-22% range.
 - **Output** — output trim, ±12 dB.
 
 ## Installing
 
-Copy the plugin bundle(s) into:
+Two options, both under
+[Releases](https://github.com/Latticeworks1/AirBand/releases):
 
-- VST3: `~/Library/Audio/Plug-Ins/VST3/`
-- AU: `~/Library/Audio/Plug-Ins/Components/`
+- **`AirBand-<version>.pkg`** — a standard macOS installer. Double-click it
+  and it places the VST3 and AU into `/Library/Audio/Plug-Ins/`, the same
+  location most commercial plugins use.
+- **`AirBand-<version>-macOS.zip`** — manual install. Unzip, then copy
+  `AirBand.vst3` into `~/Library/Audio/Plug-Ins/VST3/` and
+  `AirBand.component` into `~/Library/Audio/Plug-Ins/Components/`.
 
-Then rescan plugins in your DAW (in FL Studio: **Options → Manage Plugins →
-Find Plugins**).
-
-This build is ad-hoc signed rather than notarized with an Apple Developer ID.
-On a Mac other than the one it was built on, Gatekeeper will quarantine it on
-first download. Clear the quarantine flag before scanning:
+Because neither is notarized, Gatekeeper will block the first launch.
+Right-click the `.pkg` and choose **Open**, or clear the quarantine flag on
+the zip contents before scanning:
 
 ```bash
 xattr -cr "/path/to/AirBand.vst3" "/path/to/AirBand.component"
 ```
 
-## Building from source
+Then rescan plugins in your DAW (in FL Studio: **Options → Manage Plugins →
+Find Plugins**).
 
-Requires CMake 3.22+ and Xcode command line tools.
+## Build from source
+
+Requirements: CMake 3.22+, a C++20 compiler (Xcode command line tools on
+macOS), and internet access on first configure (JUCE is fetched via CMake's
+`FetchContent`).
 
 ```bash
+git clone https://github.com/Latticeworks1/AirBand
+cd AirBand
 cmake -B build -G "Unix Makefiles"
 cmake --build build --target AirBand_VST3 --target AirBand_AU -j 8
 ```
 
-To produce a distributable, universal-binary Release build:
+By default this also copies the built plugin straight into
+`~/Library/Audio/Plug-Ins/` for local testing (`AIRBAND_COPY_AFTER_BUILD`
+in `CMakeLists.txt`).
+
+To produce a distributable, universal-binary (arm64 + x86_64) Release
+build instead:
 
 ```bash
-scripts/package_macos.sh
+scripts/package_macos.sh      # zip of the VST3/AU bundles
+scripts/build_installer.sh    # .pkg installer, run after package_macos.sh
 ```
+
+## License
+
+AirBand's own source is released under the [MIT license](LICENSE).
+
+AirBand links against [JUCE](https://juce.com/), which is dual-licensed.
+Builds produced from this repository use JUCE under its AGPLv3 terms
+(no commercial JUCE license is held for this project), which means any
+distributed build's complete corresponding source must remain available —
+satisfied here by this repository being public. Anyone building or
+redistributing AirBand under a commercial JUCE license is not bound by
+that requirement.
