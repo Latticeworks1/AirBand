@@ -6,11 +6,12 @@ matching decoder, used purely for their side effect of dynamic treble
 lift.
 
 > [!WARNING]
-> There are no signed or notarized builds. Downloads are ad-hoc signed only
-> (no Apple Developer ID on the build machine), so macOS will quarantine the
-> plugin on first launch on any Mac other than the one it was built on. See
-> [Installing](#installing) to clear it. Only macOS is supported; there is no
-> Windows or Linux build.
+> There are no signed builds on either platform. macOS downloads are ad-hoc
+> signed only (no Apple Developer ID on the build machine), so Gatekeeper
+> will quarantine the plugin on first launch on any Mac other than the one it
+> was built on. The Windows build is unsigned too, so SmartScreen may warn on
+> first run. See [Installing](#installing) to get past both. There is no
+> Linux build.
 
 ## How it works
 
@@ -34,26 +35,36 @@ without emulating the rest of the Dolby A signal path.
 
 ## Installing
 
-Two options, both under
-[Releases](https://github.com/Latticeworks1/AirBand/releases):
+All downloads are under
+[Releases](https://github.com/Latticeworks1/AirBand/releases).
 
-- **`AirBand-<version>.pkg`** — a standard macOS installer. Double-click it
-  and it places the VST3 and AU into `/Library/Audio/Plug-Ins/`, the same
-  location most commercial plugins use.
+**macOS**
+
+- **`AirBand-<version>.pkg`** — a standard installer. Double-click it and it
+  places the VST3 and AU into `/Library/Audio/Plug-Ins/`, the same location
+  most commercial plugins use.
 - **`AirBand-<version>-macOS.zip`** — manual install. Unzip, then copy
   `AirBand.vst3` into `~/Library/Audio/Plug-Ins/VST3/` and
   `AirBand.component` into `~/Library/Audio/Plug-Ins/Components/`.
 
-Because neither is notarized, Gatekeeper will block the first launch.
-Right-click the `.pkg` and choose **Open**, or clear the quarantine flag on
-the zip contents before scanning:
+Neither is notarized, so Gatekeeper will block the first launch. Right-click
+the `.pkg` and choose **Open**, or clear the quarantine flag on the zip
+contents before scanning:
 
 ```bash
 xattr -cr "/path/to/AirBand.vst3" "/path/to/AirBand.component"
 ```
 
-Then rescan plugins in your DAW (in FL Studio: **Options → Manage Plugins →
-Find Plugins**).
+**Windows**
+
+- **`AirBand-<version>-windows.zip`** — unzip, then copy `AirBand.vst3`
+  into `C:\Program Files\Common Files\VST3\`.
+
+It isn't signed, so SmartScreen may show an "unrecognized app" prompt the
+first time your DAW loads it — choose **More info → Run anyway**.
+
+After installing on either platform, rescan plugins in your DAW (in FL
+Studio: **Options → Manage Plugins → Find Plugins**).
 
 ## Build from source
 
