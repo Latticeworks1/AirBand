@@ -29,6 +29,10 @@ without emulating the rest of the Dolby A signal path.
 
 - **Mid Air** — boost applied to quiet content in the ~3 kHz-and-up band, 0-15 dB.
 - **High Air** — boost applied to quiet content in the ~9 kHz-and-up band, 0-15 dB.
+- **De-Ess** — how much the High Air boost pulls back when that band's energy
+  is concentrated in the vocal sibilant range rather than spread across it,
+  0-100%. Keeps aggressive High Air settings from turning "S" sounds into
+  their own boosted transient.
 - **Air Blend** — how much of the processed bands is summed back with the dry
   signal, 0-100%. The original hardware mod ran in the 16-22% range.
 - **Output** — output trim, ±12 dB.
