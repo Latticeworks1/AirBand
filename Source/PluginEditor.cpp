@@ -24,6 +24,8 @@ AirBandAudioProcessorEditor::AirBandAudioProcessorEditor (AirBandAudioProcessor&
     setupRotary (outputSlider, outputLabel, "Output", *this);
     setupRotary (deEssSlider, deEssLabel, "De-Ess", *this);
     setupRotary (compSlider, compLabel, "Comp", *this);
+    setupRotary (gateSlider, gateLabel, "Gate", *this);
+    setupRotary (limiterSlider, limiterLabel, "Limiter", *this);
 
     midAirAttachment = std::make_unique<Attachment> (audioProcessor.apvts, AirBandAudioProcessor::midAirId, midAirSlider);
     highAirAttachment = std::make_unique<Attachment> (audioProcessor.apvts, AirBandAudioProcessor::highAirId, highAirSlider);
@@ -31,8 +33,10 @@ AirBandAudioProcessorEditor::AirBandAudioProcessorEditor (AirBandAudioProcessor&
     outputAttachment = std::make_unique<Attachment> (audioProcessor.apvts, AirBandAudioProcessor::outputId, outputSlider);
     deEssAttachment = std::make_unique<Attachment> (audioProcessor.apvts, AirBandAudioProcessor::deEssId, deEssSlider);
     compAttachment = std::make_unique<Attachment> (audioProcessor.apvts, AirBandAudioProcessor::compId, compSlider);
+    gateAttachment = std::make_unique<Attachment> (audioProcessor.apvts, AirBandAudioProcessor::gateId, gateSlider);
+    limiterAttachment = std::make_unique<Attachment> (audioProcessor.apvts, AirBandAudioProcessor::limiterId, limiterSlider);
 
-    setSize (580, 220);
+    setSize (760, 220);
 }
 
 void AirBandAudioProcessorEditor::paint (juce::Graphics& g)
@@ -49,7 +53,7 @@ void AirBandAudioProcessorEditor::resized()
     auto area = getLocalBounds().reduced (16);
     area.removeFromTop (36);
 
-    const int knobWidth = area.getWidth() / 6;
+    const int knobWidth = area.getWidth() / 8;
 
     auto layoutKnob = [&] (juce::Rectangle<int> bounds, juce::Slider& slider, juce::Label& label)
     {
@@ -57,10 +61,12 @@ void AirBandAudioProcessorEditor::resized()
         slider.setBounds (bounds);
     };
 
+    layoutKnob (area.removeFromLeft (knobWidth), gateSlider, gateLabel);
     layoutKnob (area.removeFromLeft (knobWidth), compSlider, compLabel);
     layoutKnob (area.removeFromLeft (knobWidth), midAirSlider, midAirLabel);
     layoutKnob (area.removeFromLeft (knobWidth), highAirSlider, highAirLabel);
     layoutKnob (area.removeFromLeft (knobWidth), deEssSlider, deEssLabel);
     layoutKnob (area.removeFromLeft (knobWidth), blendSlider, blendLabel);
     layoutKnob (area.removeFromLeft (knobWidth), outputSlider, outputLabel);
+    layoutKnob (area.removeFromLeft (knobWidth), limiterSlider, limiterLabel);
 }

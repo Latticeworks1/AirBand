@@ -41,6 +41,8 @@ target_sources(AirBand
         Source/PluginEditor.cpp
         Source/AirBandDSP.cpp
         Source/VocalCompressor.cpp
+        Source/VocalGate.cpp
+        Source/VocalLimiter.cpp
 )
 
 target_compile_definitions(AirBand
@@ -81,6 +83,8 @@ if (AIRBAND_BUILD_TESTS)
             Tests/AirBandDSPTests.cpp
             Source/AirBandDSP.cpp
             Source/VocalCompressor.cpp
+            Source/VocalGate.cpp
+            Source/VocalLimiter.cpp
     )
 
     target_include_directories(AirBand_Tests PRIVATE Source)

@@ -120,7 +120,9 @@ void AirBandDSP::prepare (double sampleRate, int maxBlockSize, int numChannels)
         highBands.back()->prepare (sampleRate, maxBlockSize, 9000.0f, true);
     }
 
+    gate.prepare (sampleRate, numChannels);
     compressor.prepare (sampleRate, numChannels);
+    limiter.prepare (sampleRate, maxBlockSize, numChannels);
 
     midAir.setSize (numChannels, maxBlockSize);
     highAir.setSize (numChannels, maxBlockSize);
@@ -134,11 +136,13 @@ void AirBandDSP::reset()
     for (auto& band : highBands)
         band->reset();
 
+    gate.reset();
     compressor.reset();
+    limiter.reset();
 }
 
 void AirBandDSP::setParameters (float midBoostDb, float highBoostDb, float blend, float outputGainDb,
-                                 float deEssAmount, float compAmount)
+                                 float deEssAmount, float compAmount, float gateAmount, float limiterCeilingDb)
 {
     // Threshold set so the boost has fully collapsed by roughly -6 dBFS in
     // the band, matching the historical unit's behaviour of leaving loud
@@ -149,7 +153,9 @@ void AirBandDSP::setParameters (float midBoostDb, float highBoostDb, float blend
     for (auto& band : highBands)
         band->setParameters (highBoostDb, -6.0f, deEssAmount);
 
+    gate.setAmount (gateAmount);
     compressor.setAmount (compAmount);
+    limiter.setCeilingDb (limiterCeilingDb);
 
     blendAmount = blend;
     outputGainLinear = juce::Decibels::decibelsToGain (outputGainDb);
@@ -166,8 +172,10 @@ void AirBandDSP::processBlock (juce::AudioBuffer<float>& buffer)
         highAir.setSize (numChannels, numSamples, false, false, true);
     }
 
-    // Level the dry signal first so the air/de-ess stage that follows sees
-    // a more consistent input, matching typical vocal chain ordering.
+    // Gate breath/mouth noise before the compressor's makeup gain would
+    // otherwise boost it, then level the dry signal so the air/de-ess
+    // stage that follows sees a more consistent input.
+    gate.process (buffer);
     compressor.process (buffer);
 
     for (int ch = 0; ch < numChannels; ++ch)
@@ -186,4 +194,7 @@ void AirBandDSP::processBlock (juce::AudioBuffer<float>& buffer)
             channelData[i] = (dry + air) * outputGainLinear;
         }
     }
+
+    // Final safety net: catches whatever the stages above stack up to.
+    limiter.process (buffer);
 }

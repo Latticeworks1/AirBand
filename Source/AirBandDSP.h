@@ -5,6 +5,8 @@
 #include <juce_dsp/juce_dsp.h>
 #include "EnvelopeDetector.h"
 #include "VocalCompressor.h"
+#include "VocalGate.h"
+#include "VocalLimiter.h"
 
 // One companded high band: highpass split, dual-time-constant envelope
 // detector, and a parallel main+side gain law modelled on the Dolby A
@@ -85,10 +87,20 @@ public:
     // high band pulls its own boost back (applied to the high band only).
     // compAmount: 0-1, the shared-detector vocal compressor (see
     // VocalCompressor.h), applied to the dry signal before the air bands.
+    // gateAmount: 0-1, the shared-detector expander/gate (see
+    // VocalGate.h), applied to the dry signal before the compressor.
+    // limiterCeilingDb: the final lookahead limiter's ceiling (see
+    // VocalLimiter.h), applied after everything else including output gain.
     void setParameters (float midBoostDb, float highBoostDb, float blend, float outputGainDb,
-                         float deEssAmount = 0.0f, float compAmount = 0.0f);
+                         float deEssAmount = 0.0f, float compAmount = 0.0f,
+                         float gateAmount = 0.0f, float limiterCeilingDb = 0.0f);
 
     void processBlock (juce::AudioBuffer<float>& buffer);
+
+    // The lookahead limiter delays the signal; the host must be told so
+    // via AudioProcessor::setLatencySamples() or AirBand will drift out of
+    // sync with unprocessed tracks.
+    int getLatencySamples() const { return limiter.getLatencySamples(); }
 
 private:
     // One filter/envelope state per channel, so a stereo signal doesn't
@@ -98,7 +110,9 @@ private:
     std::vector<std::unique_ptr<AirBand>> midBands;   // ~3 kHz highpass, "band 3" in the Dolby A patent
     std::vector<std::unique_ptr<AirBand>> highBands;  // ~9 kHz highpass, "band 4"
 
+    VocalGate gate;
     VocalCompressor compressor;
+    VocalLimiter limiter;
 
     juce::AudioBuffer<float> midAir;
     juce::AudioBuffer<float> highAir;

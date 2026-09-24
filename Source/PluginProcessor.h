@@ -43,6 +43,8 @@ public:
     static constexpr auto outputId = "output";
     static constexpr auto deEssId = "deEss";
     static constexpr auto compId = "comp";
+    static constexpr auto gateId = "gate";
+    static constexpr auto limiterId = "limiter";
 
 private:
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();

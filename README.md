@@ -27,6 +27,12 @@ without emulating the rest of the Dolby A signal path.
 
 ## Controls
 
+Signal flows through the controls in this order:
+
+- **Gate** — attenuates quiet breath and mouth noise before it reaches the
+  compressor's makeup gain, 0-100%. At 0% it is exactly transparent;
+  increasing it raises both the downward expansion ratio (up to 4:1) and
+  the maximum attenuation (up to -18 dB) applied below the gate threshold.
 - **Comp** — a broadband compressor applied to the dry signal before the air
   bands, so the vocal is levelled before the treble lift is added on top,
   0-100%. At 0% it is exactly transparent; increasing it raises both the
@@ -41,6 +47,11 @@ without emulating the rest of the Dolby A signal path.
 - **Air Blend** — how much of the processed bands is summed back with the dry
   signal, 0-100%. The original hardware mod ran in the 16-22% range.
 - **Output** — output trim, ±12 dB.
+- **Limiter** — a lookahead peak limiter, the final stage, catching whatever
+  the stages above stack up to. Sets the output ceiling, -12 to 0 dB
+  (default 0 dB: a pure safety net that only engages if something upstream
+  would otherwise clip). Because it looks ahead, AirBand reports a small
+  amount of latency (5 ms) to the host for plugin delay compensation.
 
 ## Installing
 
