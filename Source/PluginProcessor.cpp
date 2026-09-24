@@ -33,6 +33,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout AirBandAudioProcessor::creat
         juce::NormalisableRange<float> (-12.0f, 12.0f, 0.01f), 0.0f,
         juce::AudioParameterFloatAttributes().withLabel ("dB")));
 
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID { deEssId, 1 }, "De-Ess",
+        juce::NormalisableRange<float> (0.0f, 100.0f, 0.1f), 50.0f,
+        juce::AudioParameterFloatAttributes().withLabel ("%")));
+
     return { params.begin(), params.end() };
 }
 
@@ -65,8 +70,9 @@ void AirBandAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce
     const float highBoost = apvts.getRawParameterValue (highAirId)->load();
     const float blend = apvts.getRawParameterValue (blendId)->load() / 100.0f;
     const float output = apvts.getRawParameterValue (outputId)->load();
+    const float deEss = apvts.getRawParameterValue (deEssId)->load() / 100.0f;
 
-    dsp.setParameters (midBoost, highBoost, blend, output);
+    dsp.setParameters (midBoost, highBoost, blend, output, deEss);
     dsp.processBlock (buffer);
 }
 

@@ -22,13 +22,15 @@ AirBandAudioProcessorEditor::AirBandAudioProcessorEditor (AirBandAudioProcessor&
     setupRotary (highAirSlider, highAirLabel, "High Air", *this);
     setupRotary (blendSlider, blendLabel, "Air Blend", *this);
     setupRotary (outputSlider, outputLabel, "Output", *this);
+    setupRotary (deEssSlider, deEssLabel, "De-Ess", *this);
 
     midAirAttachment = std::make_unique<Attachment> (audioProcessor.apvts, AirBandAudioProcessor::midAirId, midAirSlider);
     highAirAttachment = std::make_unique<Attachment> (audioProcessor.apvts, AirBandAudioProcessor::highAirId, highAirSlider);
     blendAttachment = std::make_unique<Attachment> (audioProcessor.apvts, AirBandAudioProcessor::blendId, blendSlider);
     outputAttachment = std::make_unique<Attachment> (audioProcessor.apvts, AirBandAudioProcessor::outputId, outputSlider);
+    deEssAttachment = std::make_unique<Attachment> (audioProcessor.apvts, AirBandAudioProcessor::deEssId, deEssSlider);
 
-    setSize (420, 220);
+    setSize (500, 220);
 }
 
 void AirBandAudioProcessorEditor::paint (juce::Graphics& g)
@@ -45,7 +47,7 @@ void AirBandAudioProcessorEditor::resized()
     auto area = getLocalBounds().reduced (16);
     area.removeFromTop (36);
 
-    const int knobWidth = area.getWidth() / 4;
+    const int knobWidth = area.getWidth() / 5;
 
     auto layoutKnob = [&] (juce::Rectangle<int> bounds, juce::Slider& slider, juce::Label& label)
     {
@@ -55,6 +57,7 @@ void AirBandAudioProcessorEditor::resized()
 
     layoutKnob (area.removeFromLeft (knobWidth), midAirSlider, midAirLabel);
     layoutKnob (area.removeFromLeft (knobWidth), highAirSlider, highAirLabel);
+    layoutKnob (area.removeFromLeft (knobWidth), deEssSlider, deEssLabel);
     layoutKnob (area.removeFromLeft (knobWidth), blendSlider, blendLabel);
     layoutKnob (area.removeFromLeft (knobWidth), outputSlider, outputLabel);
 }
