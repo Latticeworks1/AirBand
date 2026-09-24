@@ -14,9 +14,7 @@ void AirBand::prepare (double sampleRate, int maxBlockSize, float highpassHz, bo
     // release. These land in the same range as the dual time-constant
     // schemes used in companders of this era; they are not swept/ablated
     // against a reference, just carried over from that convention.
-    attackCoeffFast = std::exp (-1.0f / (0.002f * (float) sr));
-    attackCoeffPeak = std::exp (-1.0f / (0.0003f * (float) sr));
-    releaseCoeff = std::exp (-1.0f / (0.15f * (float) sr));
+    envelope.prepare (sr, 0.002f, 0.0003f, 0.15f);
 
     if (deEssEnabled)
     {
@@ -26,8 +24,7 @@ void AirBand::prepare (double sampleRate, int maxBlockSize, float highpassHz, bo
         sibilantFilter.coefficients = sibilantCoeffs;
         sibilantFilter.reset();
 
-        sibilantAttackCoeff = std::exp (-1.0f / (0.001f * (float) sr));
-        sibilantReleaseCoeff = std::exp (-1.0f / (0.05f * (float) sr));
+        sibilantEnvelope.prepare (sr, 0.001f, 0.001f, 0.05f);
     }
 
     oversampler.initProcessing ((size_t) maxBlockSize);
@@ -38,13 +35,12 @@ void AirBand::prepare (double sampleRate, int maxBlockSize, float highpassHz, bo
 void AirBand::reset()
 {
     highpass.reset();
-    envelopeFast = 0.0f;
-    envelopePeak = 0.0f;
+    envelope.reset();
 
     if (deEssEnabled)
     {
         sibilantFilter.reset();
-        sibilantEnvelope = 0.0f;
+        sibilantEnvelope.reset();
     }
 
     oversampler.reset();
@@ -61,44 +57,26 @@ float AirBand::processSample (float x)
 {
     const float band = highpass.processSample (x);
     const float rectified = std::abs (band);
-
-    // Fast level tracker.
-    if (rectified > envelopeFast)
-        envelopeFast = attackCoeffFast * envelopeFast + (1.0f - attackCoeffFast) * rectified;
-    else
-        envelopeFast = releaseCoeff * envelopeFast + (1.0f - releaseCoeff) * rectified;
-
-    // Faster peak catch so a transient can't outrun the detector.
-    if (rectified > envelopePeak)
-        envelopePeak = attackCoeffPeak * envelopePeak + (1.0f - attackCoeffPeak) * rectified;
-    else
-        envelopePeak = releaseCoeff * envelopePeak + (1.0f - releaseCoeff) * rectified;
-
-    const float envelope = juce::jmax (envelopeFast, envelopePeak);
+    const float env = envelope.pushSample (rectified);
 
     // Parallel main+side law: the side path's gain collapses toward unity
     // as the envelope approaches the limiter threshold, so the boost is
     // concentrated on low-level content exactly as in the encoder-only mod.
-    const float levelNorm = juce::jlimit (0.0f, 1.0f, envelope / juce::jmax (thresholdLinear, 1.0e-6f));
+    const float levelNorm = juce::jlimit (0.0f, 1.0f, env / juce::jmax (thresholdLinear, 1.0e-6f));
     const float knee = 1.0f - levelNorm;
     float gain = 1.0f + (boostLinearMax - 1.0f) * knee * knee;
 
     if (deEssEnabled && deEssAmount > 0.0f)
     {
         const float sibilantSample = sibilantFilter.processSample (x);
-        const float sibilantRectified = std::abs (sibilantSample);
-
-        if (sibilantRectified > sibilantEnvelope)
-            sibilantEnvelope = sibilantAttackCoeff * sibilantEnvelope + (1.0f - sibilantAttackCoeff) * sibilantRectified;
-        else
-            sibilantEnvelope = sibilantReleaseCoeff * sibilantEnvelope + (1.0f - sibilantReleaseCoeff) * sibilantRectified;
+        const float sibilantLevel = sibilantEnvelope.pushSample (std::abs (sibilantSample));
 
         // How much of this band's own energy sits inside the narrow
         // sibilant sub-band, as opposed to spread across the whole band
         // (breath, cymbal-like air, general high-frequency detail). Near 0
         // for broadband content, approaching 1 when the band is dominated
         // by a concentrated "S".
-        const float sibilance = juce::jlimit (0.0f, 1.0f, sibilantEnvelope / juce::jmax (envelope, 1.0e-6f));
+        const float sibilance = juce::jlimit (0.0f, 1.0f, sibilantLevel / juce::jmax (env, 1.0e-6f));
         gain *= 1.0f - deEssAmount * sibilance;
     }
 
@@ -142,6 +120,8 @@ void AirBandDSP::prepare (double sampleRate, int maxBlockSize, int numChannels)
         highBands.back()->prepare (sampleRate, maxBlockSize, 9000.0f, true);
     }
 
+    compressor.prepare (sampleRate, numChannels);
+
     midAir.setSize (numChannels, maxBlockSize);
     highAir.setSize (numChannels, maxBlockSize);
 }
@@ -153,9 +133,12 @@ void AirBandDSP::reset()
 
     for (auto& band : highBands)
         band->reset();
+
+    compressor.reset();
 }
 
-void AirBandDSP::setParameters (float midBoostDb, float highBoostDb, float blend, float outputGainDb, float deEssAmount)
+void AirBandDSP::setParameters (float midBoostDb, float highBoostDb, float blend, float outputGainDb,
+                                 float deEssAmount, float compAmount)
 {
     // Threshold set so the boost has fully collapsed by roughly -6 dBFS in
     // the band, matching the historical unit's behaviour of leaving loud
@@ -165,6 +148,8 @@ void AirBandDSP::setParameters (float midBoostDb, float highBoostDb, float blend
 
     for (auto& band : highBands)
         band->setParameters (highBoostDb, -6.0f, deEssAmount);
+
+    compressor.setAmount (compAmount);
 
     blendAmount = blend;
     outputGainLinear = juce::Decibels::decibelsToGain (outputGainDb);
@@ -180,6 +165,10 @@ void AirBandDSP::processBlock (juce::AudioBuffer<float>& buffer)
         midAir.setSize (numChannels, numSamples, false, false, true);
         highAir.setSize (numChannels, numSamples, false, false, true);
     }
+
+    // Level the dry signal first so the air/de-ess stage that follows sees
+    // a more consistent input, matching typical vocal chain ordering.
+    compressor.process (buffer);
 
     for (int ch = 0; ch < numChannels; ++ch)
     {

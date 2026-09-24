@@ -40,6 +40,7 @@ target_sources(AirBand
         Source/PluginProcessor.cpp
         Source/PluginEditor.cpp
         Source/AirBandDSP.cpp
+        Source/VocalCompressor.cpp
 )
 
 target_compile_definitions(AirBand
@@ -59,3 +60,45 @@ target_link_libraries(AirBand
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags
 )
+
+# Pushes real synthetic audio through the actual DSP classes (no plugin
+# hosting involved) and checks the output against expected physical
+# behaviour, e.g. that a quiet high-frequency tone actually comes out
+# louder and a loud one doesn't. This exists because a test suite that
+# only checks "did it compile" / "did setParameters throw" can pass while
+# the signal path itself is silently broken (wrong wiring, a stage that
+# never runs, output pinned to zero); only running real numbers through
+# processBlock and inspecting the waveform catches that class of bug.
+option(AIRBAND_BUILD_TESTS "Build the AirBand_Tests DSP test executable" ON)
+
+if (AIRBAND_BUILD_TESTS)
+    juce_add_console_app(AirBand_Tests
+        PRODUCT_NAME "AirBand Tests"
+    )
+
+    target_sources(AirBand_Tests
+        PRIVATE
+            Tests/AirBandDSPTests.cpp
+            Source/AirBandDSP.cpp
+            Source/VocalCompressor.cpp
+    )
+
+    target_include_directories(AirBand_Tests PRIVATE Source)
+
+    target_compile_definitions(AirBand_Tests
+        PRIVATE
+            JUCE_WEB_BROWSER=0
+            JUCE_USE_CURL=0
+    )
+
+    target_link_libraries(AirBand_Tests
+        PRIVATE
+            juce::juce_dsp
+        PUBLIC
+            juce::juce_recommended_config_flags
+            juce::juce_recommended_warning_flags
+    )
+
+    enable_testing()
+    add_test(NAME AirBandDSPTests COMMAND AirBand_Tests)
+endif()

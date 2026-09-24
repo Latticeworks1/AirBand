@@ -42,6 +42,7 @@ public:
     static constexpr auto blendId = "blend";
     static constexpr auto outputId = "output";
     static constexpr auto deEssId = "deEss";
+    static constexpr auto compId = "comp";
 
 private:
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();

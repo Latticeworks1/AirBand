@@ -3,6 +3,8 @@
 #include <memory>
 #include <vector>
 #include <juce_dsp/juce_dsp.h>
+#include "EnvelopeDetector.h"
+#include "VocalCompressor.h"
 
 // One companded high band: highpass split, dual-time-constant envelope
 // detector, and a parallel main+side gain law modelled on the Dolby A
@@ -44,29 +46,23 @@ private:
     double sr = 44100.0;
     float highpassFreq = 3000.0f;
 
-    // Dual time-constant detector: a fast integrator for general level
-    // tracking, and a much faster peak catch so a transient can't punch
-    // through before the slower detector reacts.
-    float envelopeFast = 0.0f;
-    float envelopePeak = 0.0f;
-    float attackCoeffFast = 0.0f;
-    float attackCoeffPeak = 0.0f;
-    float releaseCoeff = 0.0f;
+    // ~2 ms fast tracker, ~0.3 ms peak catch, ~150 ms program-dependent
+    // release.
+    EnvelopeDetector envelope;
 
     float boostLinearMax = 1.0f;
     float thresholdLinear = 1.0f;
 
     // Sibilance sub-detector: a narrow bandpass centred in the vocal "S"
-    // range, plus its own fast envelope. Comparing this envelope against
+    // range, plus its own fast envelope (single attack time, so fast and
+    // peak trackers collapse together). Comparing this envelope against
     // the band's own broadband envelope gives a measure of how spectrally
     // concentrated (sibilant) versus broadband (airy/breathy) the current
     // content is, independent of the level-based knee above.
     bool deEssEnabled = false;
     juce::dsp::IIR::Filter<float> sibilantFilter;
     juce::dsp::IIR::Coefficients<float>::Ptr sibilantCoeffs;
-    float sibilantEnvelope = 0.0f;
-    float sibilantAttackCoeff = 0.0f;
-    float sibilantReleaseCoeff = 0.0f;
+    EnvelopeDetector sibilantEnvelope;
     float deEssAmount = 0.0f;
 
     // Oversampled soft clip on the side path only, so a sibilant/transient
@@ -87,7 +83,10 @@ public:
     // roughly 0.16-0.22; exposed here as the "Air" master control).
     // deEssAmount: 0-1, how strongly concentrated sibilant energy in the
     // high band pulls its own boost back (applied to the high band only).
-    void setParameters (float midBoostDb, float highBoostDb, float blend, float outputGainDb, float deEssAmount = 0.0f);
+    // compAmount: 0-1, the shared-detector vocal compressor (see
+    // VocalCompressor.h), applied to the dry signal before the air bands.
+    void setParameters (float midBoostDb, float highBoostDb, float blend, float outputGainDb,
+                         float deEssAmount = 0.0f, float compAmount = 0.0f);
 
     void processBlock (juce::AudioBuffer<float>& buffer);
 
@@ -98,6 +97,8 @@ private:
     // the vector itself can't relocate AirBand instances directly.
     std::vector<std::unique_ptr<AirBand>> midBands;   // ~3 kHz highpass, "band 3" in the Dolby A patent
     std::vector<std::unique_ptr<AirBand>> highBands;  // ~9 kHz highpass, "band 4"
+
+    VocalCompressor compressor;
 
     juce::AudioBuffer<float> midAir;
     juce::AudioBuffer<float> highAir;

@@ -27,6 +27,11 @@ without emulating the rest of the Dolby A signal path.
 
 ## Controls
 
+- **Comp** — a broadband compressor applied to the dry signal before the air
+  bands, so the vocal is levelled before the treble lift is added on top,
+  0-100%. At 0% it is exactly transparent; increasing it raises both the
+  compression ratio (up to 4:1) and an automatic makeup gain (up to +6 dB)
+  together.
 - **Mid Air** — boost applied to quiet content in the ~3 kHz-and-up band, 0-15 dB.
 - **High Air** — boost applied to quiet content in the ~9 kHz-and-up band, 0-15 dB.
 - **De-Ess** — how much the High Air boost pulls back when that band's energy
@@ -93,6 +98,23 @@ build instead:
 ```bash
 scripts/package_macos.sh      # zip of the VST3/AU bundles
 scripts/build_installer.sh    # .pkg installer, run after package_macos.sh
+```
+
+## Testing
+
+`AirBand_Tests` pushes synthetic audio through the real `AirBandDSP` class
+directly (no plugin host involved) and checks the output waveform against
+expected behaviour: a quiet high-frequency tone actually comes out louder,
+a loud one stays near unity, De-Ess actually suppresses sibilant content
+more than broadband content, the compressor actually reduces gain on loud
+material relative to quiet material, and every effect at its transparent
+setting passes audio through unchanged. This exists specifically to catch
+the class of bug where the DSP compiles and every function call succeeds
+but the signal path itself is silently broken.
+
+```bash
+cmake --build build --target AirBand_Tests
+./build/AirBand_Tests_artefacts/AirBand_Tests
 ```
 
 ## License
