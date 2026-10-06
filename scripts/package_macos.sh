@@ -21,6 +21,17 @@ echo "Building VST3 and AU..."
 cmake --build "$BUILD_DIR" --target AirBand_VST3 --target AirBand_AU -j "$(sysctl -n hw.ncpu)"
 
 ARTEFACTS="$BUILD_DIR/AirBand_artefacts/Release"
+
+# The VST3 post-build step writes Resources/moduleinfo.json after the linker's
+# signature is applied, and the AU bundle only carries the linker's
+# executable-level signature. Re-seal both bundles ad hoc so the whole bundle
+# verifies, and refuse to package if it does not.
+echo "Sealing bundles (ad-hoc)..."
+for bundle in "$ARTEFACTS/VST3/AirBand.vst3" "$ARTEFACTS/AU/AirBand.component"; do
+    codesign --force --deep --sign - --timestamp=none "$bundle"
+    codesign --verify --deep --strict "$bundle"
+done
+
 rm -rf "$DIST_DIR"
 mkdir -p "$DIST_DIR/AirBand-${VERSION}"
 

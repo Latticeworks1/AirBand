@@ -77,8 +77,11 @@ xattr -cr "/path/to/AirBand.vst3" "/path/to/AirBand.component"
 
 **Windows**
 
-- **`AirBand-<version>-windows.zip`** — unzip, then copy `AirBand.vst3`
-  into `C:\Program Files\Common Files\VST3\`.
+- **`AirBand-<version>-windows.zip`** — unzip it, then either right-click
+  `Install-AirBand.bat` and choose **Run as administrator**, or copy
+  `AirBand.vst3` into `C:\Program Files\Common Files\VST3\` yourself.
+  The plugin is a single 64-bit VST3 with the C++ runtime built in, so
+  nothing else needs to be installed.
 
 It isn't signed, so SmartScreen may show an "unrecognized app" prompt the
 first time your DAW loads it — choose **More info → Run anyway**.

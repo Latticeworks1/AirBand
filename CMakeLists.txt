@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(AirBand VERSION 1.3.0)
+# Link the MSVC runtime statically so the Windows VST3 loads on a machine that
+# has never installed the Visual C++ Redistributable. Must precede project().
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+project(AirBand VERSION 1.3.1)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

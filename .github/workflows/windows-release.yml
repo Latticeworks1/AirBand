@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Release tag to attach the build to (e.g. v1.0.0)"
-        required: true
+        description: "Release tag to attach the build to (e.g. v1.0.0); leave empty for a build-only dry run"
+        required: false
 
 permissions:
   contents: write
@@ -26,6 +26,22 @@ jobs:
       - name: Build VST3
         run: cmake --build build --config Release --target AirBand_VST3 -j 4
 
+      - name: Build DSP tests
+        run: cmake --build build --config Release --target AirBand_Tests -j 4
+
+      - name: Run DSP tests
+        shell: bash
+        run: build/AirBand_Tests_artefacts/Release/AirBand_Tests.exe
+
+      - name: Verify the VST3 needs no Visual C++ Redistributable
+        shell: bash
+        run: |
+          DLL="build/AirBand_artefacts/Release/VST3/AirBand.vst3/Contents/x86_64-win/AirBand.vst3"
+          if grep -aqiE 'vcruntime140|msvcp140' "$DLL"; then
+            echo "VST3 still imports the dynamic MSVC runtime" >&2
+            exit 1
+          fi
+
       - name: Package
         shell: bash
         run: |
@@ -35,10 +51,18 @@ jobs:
           mkdir -p "$DIST"
           cp -R "build/AirBand_artefacts/Release/VST3/AirBand.vst3" "$DIST/"
           cp README.md "$DIST/" || true
+          cp scripts/install_windows.bat "$DIST/Install-AirBand.bat"
           cd dist
           7z a "AirBand-${VERSION}-windows.zip" "AirBand-${VERSION}-windows"
 
+      - name: Keep the zip as a workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AirBand-${{ env.VERSION }}-windows
+          path: dist/AirBand-${{ env.VERSION }}-windows.zip
+
       - name: Upload to release
+        if: github.event.inputs.tag != '' || startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
