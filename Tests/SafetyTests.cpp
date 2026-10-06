@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cmath>
 #include <string>
 
 #include "AirBandDSP.h"
