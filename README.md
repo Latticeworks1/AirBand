@@ -6,7 +6,8 @@ matching decoder, used purely for their side effect of dynamic treble
 lift.
 
 <p align="center">
-  <a href="https://github.com/Latticeworks1/AirBand/releases/latest/download/AirBand-windows.zip"><img src="https://img.shields.io/badge/Download%20for%20Windows%20(VST3)-0078D6?style=for-the-badge" alt="Download for Windows (VST3)"></a>
+  <a href="https://github.com/Latticeworks1/AirBand/releases/latest/download/AirBand-windows-setup.exe"><img src="https://img.shields.io/badge/Download%20for%20Windows%20(installer)-0078D6?style=for-the-badge" alt="Download for Windows (installer)"></a>
+  <a href="https://github.com/Latticeworks1/AirBand/releases/latest/download/AirBand-windows.zip"><img src="https://img.shields.io/badge/Download%20for%20Windows%20(zip)-0078D6?style=for-the-badge" alt="Download for Windows (zip)"></a>
   <a href="https://github.com/Latticeworks1/AirBand/releases/latest/download/AirBand-macOS.pkg"><img src="https://img.shields.io/badge/Download%20for%20macOS%20(installer)-555555?style=for-the-badge" alt="Download for macOS (installer)"></a>
   <a href="https://github.com/Latticeworks1/AirBand/releases/latest/download/AirBand-macOS.zip"><img src="https://img.shields.io/badge/Download%20for%20macOS%20(zip)-555555?style=for-the-badge" alt="Download for macOS (zip)"></a>
 </p>
@@ -75,14 +76,16 @@ xattr -cr "/path/to/AirBand.vst3" "/path/to/AirBand.component"
 
 **Windows**
 
-- **`AirBand-windows.zip`** — unzip it, then either right-click
-  `Install-AirBand.bat` and choose **Run as administrator**, or copy
-  `AirBand.vst3` into `C:\Program Files\Common Files\VST3\` yourself.
-  The plugin is a single 64-bit VST3 with the C++ runtime built in, so
-  nothing else needs to be installed.
+- **`AirBand-windows-setup.exe`** — an installer wizard. Run it and it
+  places `AirBand.vst3` into `C:\Program Files\Common Files\VST3\`, and it
+  can be removed later from Settings, Apps. The plugin is a single 64-bit
+  VST3 with the C++ runtime built in, so nothing else needs to be installed.
+- **`AirBand-windows.zip`** — manual install. Unzip, then copy `AirBand.vst3`
+  into `C:\Program Files\Common Files\VST3\`.
 
-It isn't signed, so SmartScreen may show an "unrecognized app" prompt the
-first time your DAW loads it — choose **More info → Run anyway**.
+Neither Windows file is signed, so SmartScreen may show an "unrecognized app"
+prompt when you run the installer or first load the plugin — choose **More
+info → Run anyway**.
 
 After installing on either platform, rescan plugins in your DAW (in FL
 Studio: **Options → Manage Plugins → Find Plugins**).
