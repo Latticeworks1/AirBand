@@ -5,13 +5,11 @@ hack: two bands of a 1970s noise-reduction encoder, run without their
 matching decoder, used purely for their side effect of dynamic treble
 lift.
 
-> [!WARNING]
-> There are no signed builds on either platform. macOS downloads are ad-hoc
-> signed only (no Apple Developer ID on the build machine), so Gatekeeper
-> will quarantine the plugin on first launch on any Mac other than the one it
-> was built on. The Windows build is unsigned too, so SmartScreen may warn on
-> first run. See [Installing](#installing) to get past both. There is no
-> Linux build.
+<p align="center">
+  <a href="https://github.com/Latticeworks1/AirBand/releases/latest/download/AirBand-windows.zip"><img src="https://img.shields.io/badge/Download%20for%20Windows%20(VST3)-0078D6?style=for-the-badge" alt="Download for Windows (VST3)"></a>
+  <a href="https://github.com/Latticeworks1/AirBand/releases/latest/download/AirBand-macOS.pkg"><img src="https://img.shields.io/badge/Download%20for%20macOS%20(installer)-555555?style=for-the-badge" alt="Download for macOS (installer)"></a>
+  <a href="https://github.com/Latticeworks1/AirBand/releases/latest/download/AirBand-macOS.zip"><img src="https://img.shields.io/badge/Download%20for%20macOS%20(zip)-555555?style=for-the-badge" alt="Download for macOS (zip)"></a>
+</p>
 
 ## How it works
 
@@ -60,10 +58,10 @@ All downloads are under
 
 **macOS**
 
-- **`AirBand-<version>.pkg`** — a standard installer. Double-click it and it
+- **`AirBand-macOS.pkg`** — a standard installer. Double-click it and it
   places the VST3 and AU into `/Library/Audio/Plug-Ins/`, the same location
   most commercial plugins use.
-- **`AirBand-<version>-macOS.zip`** — manual install. Unzip, then copy
+- **`AirBand-macOS.zip`** — manual install. Unzip, then copy
   `AirBand.vst3` into `~/Library/Audio/Plug-Ins/VST3/` and
   `AirBand.component` into `~/Library/Audio/Plug-Ins/Components/`.
 
@@ -77,7 +75,7 @@ xattr -cr "/path/to/AirBand.vst3" "/path/to/AirBand.component"
 
 **Windows**
 
-- **`AirBand-<version>-windows.zip`** — unzip it, then either right-click
+- **`AirBand-windows.zip`** — unzip it, then either right-click
   `Install-AirBand.bat` and choose **Run as administrator**, or copy
   `AirBand.vst3` into `C:\Program Files\Common Files\VST3\` yourself.
   The plugin is a single 64-bit VST3 with the C++ runtime built in, so

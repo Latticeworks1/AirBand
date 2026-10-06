@@ -59,10 +59,10 @@ EOF
 productbuild \
     --distribution "$DISTRIBUTION_XML" \
     --package-path "$BUILD_DIR" \
-    "$PKG_OUT/AirBand-${VERSION}.pkg"
+    "$PKG_OUT/AirBand-macOS.pkg"
 
 echo
-echo "Installer built: ${PKG_OUT}/AirBand-${VERSION}.pkg"
+echo "Installer built: ${PKG_OUT}/AirBand-macOS.pkg"
 echo "Unsigned (no Developer ID Installer certificate on this machine) — macOS"
 echo "will show an 'unidentified developer' warning; right-click > Open to run it,"
 echo "or System Settings > Privacy & Security > Open Anyway after the first block."

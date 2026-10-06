@@ -53,13 +53,13 @@ jobs:
           cp README.md "$DIST/" || true
           cp scripts/install_windows.bat "$DIST/Install-AirBand.bat"
           cd dist
-          7z a "AirBand-${VERSION}-windows.zip" "AirBand-${VERSION}-windows"
+          7z a "AirBand-windows.zip" "AirBand-${VERSION}-windows"
 
       - name: Keep the zip as a workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: AirBand-${{ env.VERSION }}-windows
-          path: dist/AirBand-${{ env.VERSION }}-windows.zip
+          name: AirBand-windows
+          path: dist/AirBand-windows.zip
 
       - name: Upload to release
         if: github.event.inputs.tag != '' || startsWith(github.ref, 'refs/tags/')
@@ -71,4 +71,4 @@ jobs:
           if [ -z "$TAG" ]; then
             TAG="${GITHUB_REF#refs/tags/}"
           fi
-          gh release upload "$TAG" "dist/AirBand-${VERSION}-windows.zip" --clobber --repo "${{ github.repository }}"
+          gh release upload "$TAG" "dist/AirBand-windows.zip" --clobber --repo "${{ github.repository }}"

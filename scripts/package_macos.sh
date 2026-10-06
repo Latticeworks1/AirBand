@@ -44,11 +44,11 @@ lipo -info "$DIST_DIR/AirBand-${VERSION}/AirBand.vst3/Contents/MacOS/AirBand"
 lipo -info "$DIST_DIR/AirBand-${VERSION}/AirBand.component/Contents/MacOS/AirBand"
 
 pushd "$DIST_DIR" > /dev/null
-zip -r -q "AirBand-${VERSION}-macOS.zip" "AirBand-${VERSION}"
+zip -r -q "AirBand-macOS.zip" "AirBand-${VERSION}"
 popd > /dev/null
 
 echo
-echo "Packaged: ${DIST_DIR}/AirBand-${VERSION}-macOS.zip"
+echo "Packaged: ${DIST_DIR}/AirBand-macOS.zip"
 echo "Signature is ad-hoc only (no Developer ID cert on this machine)."
 echo "Recipients on other Macs will need to clear the quarantine flag:"
 echo "  xattr -cr \"/path/to/AirBand.vst3\" \"/path/to/AirBand.component\""
