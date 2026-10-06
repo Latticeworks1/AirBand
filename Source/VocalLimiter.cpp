@@ -25,12 +25,12 @@ void VocalLimiter::reset()
     currentGain = 1.0f;
 }
 
-void VocalLimiter::setCeilingDb (float ceilingDb)
+void VocalLimiter::setCeilingDb (float ceilingDb) AIRBAND_NONBLOCKING
 {
     ceilingLinear = juce::Decibels::decibelsToGain (ceilingDb);
 }
 
-void VocalLimiter::process (juce::AudioBuffer<float>& buffer)
+void VocalLimiter::process (juce::AudioBuffer<float>& buffer) AIRBAND_NONBLOCKING
 {
     const int numChannels = juce::jmin (buffer.getNumChannels(), (int) delayLines.size());
     const int numSamples = buffer.getNumSamples();

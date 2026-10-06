@@ -1,13 +1,16 @@
 #pragma once
 
+#include <memory>
 #include <juce_audio_processors/juce_audio_processors.h>
-#include "AirBandDSP.h"
+#include "HostParameters.h"
+
+class AirBandDSP;
 
 class AirBandAudioProcessor : public juce::AudioProcessor
 {
 public:
     AirBandAudioProcessor();
-    ~AirBandAudioProcessor() override = default;
+    ~AirBandAudioProcessor() override;
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
@@ -37,19 +40,17 @@ public:
 
     juce::AudioProcessorValueTreeState apvts;
 
-    static constexpr auto midAirId = "midAir";
-    static constexpr auto highAirId = "highAir";
-    static constexpr auto blendId = "blend";
-    static constexpr auto outputId = "output";
-    static constexpr auto deEssId = "deEss";
-    static constexpr auto compId = "comp";
-    static constexpr auto gateId = "gate";
-    static constexpr auto limiterId = "limiter";
+    static constexpr auto midAirId = host::midAirId;
+    static constexpr auto highAirId = host::highAirId;
+    static constexpr auto blendId = host::blendId;
+    static constexpr auto outputId = host::outputId;
+    static constexpr auto deEssId = host::deEssId;
+    static constexpr auto compId = host::compId;
+    static constexpr auto gateId = host::gateId;
+    static constexpr auto limiterId = host::limiterId;
 
 private:
-    juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
-
-    AirBandDSP dsp;
+    std::unique_ptr<AirBandDSP> dsp;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AirBandAudioProcessor)
 };

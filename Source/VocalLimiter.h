@@ -1,7 +1,8 @@
 #pragma once
 
+#include "Realtime.h"
 #include <vector>
-#include <juce_dsp/juce_dsp.h>
+#include <juce_audio_basics/juce_audio_basics.h>
 
 // A stereo-linked lookahead peak limiter, the final stage in the chain,
 // catching whatever the gate/compressor/air/blend/output stages upstream
@@ -22,11 +23,11 @@ public:
     void prepare (double sampleRate, int maxBlockSize, int numChannels);
     void reset();
 
-    void setCeilingDb (float ceilingDb);
+    void setCeilingDb (float ceilingDb) AIRBAND_NONBLOCKING;
 
     int getLatencySamples() const { return lookaheadSamples; }
 
-    void process (juce::AudioBuffer<float>& buffer);
+    void process (juce::AudioBuffer<float>& buffer) AIRBAND_NONBLOCKING;
 
 private:
     double sr = 44100.0;

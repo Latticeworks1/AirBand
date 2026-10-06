@@ -9,6 +9,11 @@ project(AirBand VERSION 1.3.1)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Behaviour is specified by bit-exact regression vectors, so the default build is the optimised one.
+if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+endif()
+
 # Dev builds install straight into ~/Library/Audio/Plug-Ins for fast iteration;
 # distribution builds turn this off and package the artefacts instead, so a
 # release build never silently overwrites whatever the user is testing.
@@ -39,32 +44,57 @@ juce_add_plugin(AirBand
     PRODUCT_NAME "AirBand"
 )
 
+# The signal processing. The plugin and the tests link this one target, so both run the same
+# object code under the same compiler flags.
+add_library(airband_core STATIC
+    Source/AirBand.cpp
+    Source/AirBandDSP.cpp
+    Source/VocalCompressor.cpp
+    Source/VocalGate.cpp
+    Source/VocalLimiter.cpp
+)
+
+target_include_directories(airband_core PUBLIC Source)
+
+# RealtimeSanitizer (LLVM 19+; Apple clang does not ship the runtime): instruments the functions
+# marked AIRBAND_NONBLOCKING. Used only by scripts/check_realtime.sh, in its own build tree.
+option(AIRBAND_RTSAN "Build the core and tests with -fsanitize=realtime" OFF)
+if (AIRBAND_RTSAN)
+    target_compile_options(airband_core PUBLIC -fsanitize=realtime)
+    target_link_options(airband_core PUBLIC -fsanitize=realtime)
+endif()
+
+target_compile_definitions(airband_core
+    PUBLIC
+        JUCE_WEB_BROWSER=0
+        JUCE_USE_CURL=0
+)
+
+target_link_libraries(airband_core
+    PUBLIC
+        juce::juce_dsp
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_lto_flags
+        juce::juce_recommended_warning_flags
+)
+
 target_sources(AirBand
     PRIVATE
+        Source/HostParameters.cpp
         Source/PluginProcessor.cpp
         Source/PluginEditor.cpp
-        Source/AirBandDSP.cpp
-        Source/VocalCompressor.cpp
-        Source/VocalGate.cpp
-        Source/VocalLimiter.cpp
 )
 
 target_compile_definitions(AirBand
     PUBLIC
-        JUCE_WEB_BROWSER=0
-        JUCE_USE_CURL=0
         JUCE_VST3_CAN_REPLACE_VST2=0
         JUCE_DISPLAY_SPLASH_SCREEN=0
 )
 
 target_link_libraries(AirBand
     PRIVATE
+        airband_core
         juce::juce_audio_utils
-        juce::juce_dsp
-    PUBLIC
-        juce::juce_recommended_config_flags
-        juce::juce_recommended_lto_flags
-        juce::juce_recommended_warning_flags
 )
 
 # Pushes real synthetic audio through the actual DSP classes (no plugin
@@ -84,29 +114,48 @@ if (AIRBAND_BUILD_TESTS)
 
     target_sources(AirBand_Tests
         PRIVATE
-            Tests/AirBandDSPTests.cpp
-            Source/AirBandDSP.cpp
-            Source/VocalCompressor.cpp
-            Source/VocalGate.cpp
-            Source/VocalLimiter.cpp
+            Tests/TestMain.cpp
+            Tests/Check.cpp
+            Tests/TestSignals.cpp
+            Tests/TestMetrics.cpp
+            Tests/Harness.cpp
+            Tests/LinearTests.cpp
+            Tests/AirTests.cpp
+            Tests/DynamicsTests.cpp
+            Tests/PartitionTests.cpp
+            Tests/SafetyTests.cpp
+            Tests/RealtimeTests.cpp
+            Tests/GoldenCases.cpp
+            Tests/GoldenTests.cpp
     )
 
-    target_include_directories(AirBand_Tests PRIVATE Source)
+    target_include_directories(AirBand_Tests PRIVATE Tests)
+    target_link_libraries(AirBand_Tests PRIVATE airband_core)
 
-    target_compile_definitions(AirBand_Tests
-        PRIVATE
-            JUCE_WEB_BROWSER=0
-            JUCE_USE_CURL=0
+    # The host boundary: parameter layout and conversion, through a real AudioProcessorValueTreeState.
+    juce_add_console_app(AirBand_HostTests
+        PRODUCT_NAME "AirBand Host Tests"
     )
 
-    target_link_libraries(AirBand_Tests
+    target_sources(AirBand_HostTests
         PRIVATE
-            juce::juce_dsp
-        PUBLIC
+            Tests/HostTests.cpp
+            Tests/Check.cpp
+            Source/HostParameters.cpp
+    )
+
+    target_include_directories(AirBand_HostTests PRIVATE Tests Source)
+
+    target_compile_definitions(AirBand_HostTests PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0)
+
+    target_link_libraries(AirBand_HostTests
+        PRIVATE
+            juce::juce_audio_processors
             juce::juce_recommended_config_flags
             juce::juce_recommended_warning_flags
     )
 
     enable_testing()
     add_test(NAME AirBandDSPTests COMMAND AirBand_Tests)
+    add_test(NAME AirBandHostTests COMMAND AirBand_HostTests)
 endif()

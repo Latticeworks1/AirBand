@@ -17,7 +17,7 @@ void VocalCompressor::reset()
         detector.reset();
 }
 
-void VocalCompressor::setAmount (float amount)
+void VocalCompressor::setAmount (float amount) AIRBAND_NONBLOCKING
 {
     amount = juce::jlimit (0.0f, 1.0f, amount);
     ratio = 1.0f + amount * 3.0f;         // 1:1 .. 4:1
@@ -38,7 +38,7 @@ float VocalCompressor::processSample (float x, EnvelopeDetector& detector) const
     return x * gain;
 }
 
-void VocalCompressor::process (juce::AudioBuffer<float>& buffer)
+void VocalCompressor::process (juce::AudioBuffer<float>& buffer) AIRBAND_NONBLOCKING
 {
     const int numChannels = juce::jmin (buffer.getNumChannels(), (int) detectors.size());
 

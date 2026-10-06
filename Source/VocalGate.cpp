@@ -15,7 +15,7 @@ void VocalGate::reset()
         detector.reset();
 }
 
-void VocalGate::setAmount (float amount)
+void VocalGate::setAmount (float amount) AIRBAND_NONBLOCKING
 {
     amount = juce::jlimit (0.0f, 1.0f, amount);
     ratio = 1.0f + amount * 3.0f;         // 1:1 .. 4:1 downward expansion
@@ -34,7 +34,7 @@ float VocalGate::processSample (float x, EnvelopeDetector& detector) const
     return x * juce::Decibels::decibelsToGain (-attenuationDb);
 }
 
-void VocalGate::process (juce::AudioBuffer<float>& buffer)
+void VocalGate::process (juce::AudioBuffer<float>& buffer) AIRBAND_NONBLOCKING
 {
     const int numChannels = juce::jmin (buffer.getNumChannels(), (int) detectors.size());
 

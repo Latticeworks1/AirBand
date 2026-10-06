@@ -1,7 +1,8 @@
 #pragma once
 
+#include "Realtime.h"
 #include <vector>
-#include <juce_dsp/juce_dsp.h>
+#include <juce_audio_basics/juce_audio_basics.h>
 #include "EnvelopeDetector.h"
 
 // A broadband downward expander/gate applied to the dry signal before the
@@ -21,9 +22,9 @@ public:
 
     // amount: 0-1. At 0 the gate is exactly transparent (ratio collapses
     // to 1:1, so attenuation is always 0 regardless of level).
-    void setAmount (float amount);
+    void setAmount (float amount) AIRBAND_NONBLOCKING;
 
-    void process (juce::AudioBuffer<float>& buffer);
+    void process (juce::AudioBuffer<float>& buffer) AIRBAND_NONBLOCKING;
 
 private:
     float processSample (float x, EnvelopeDetector& detector) const;

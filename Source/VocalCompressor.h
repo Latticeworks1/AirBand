@@ -1,7 +1,8 @@
 #pragma once
 
+#include "Realtime.h"
 #include <vector>
-#include <juce_dsp/juce_dsp.h>
+#include <juce_audio_basics/juce_audio_basics.h>
 #include "EnvelopeDetector.h"
 
 // A broadband downward compressor sharing the same envelope-follower shape
@@ -23,9 +24,9 @@ public:
     // amount: 0-1. At 0 the compressor is exactly transparent (ratio
     // collapses to 1:1 and makeup gain is 0 dB); increasing it raises both
     // the ratio and the makeup gain together.
-    void setAmount (float amount);
+    void setAmount (float amount) AIRBAND_NONBLOCKING;
 
-    void process (juce::AudioBuffer<float>& buffer);
+    void process (juce::AudioBuffer<float>& buffer) AIRBAND_NONBLOCKING;
 
 private:
     float processSample (float x, EnvelopeDetector& detector) const;

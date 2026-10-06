@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cmath>
-#include <juce_dsp/juce_dsp.h>
+#include <juce_core/juce_core.h>
 
 // Dual time-constant envelope follower: a fast integrator for general level
 // tracking, and a separate (optionally faster) peak catch so a transient

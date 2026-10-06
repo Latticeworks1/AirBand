@@ -117,20 +117,29 @@ scripts/build_installer.sh    # .pkg installer, run after package_macos.sh
 
 ## Testing
 
-`AirBand_Tests` pushes synthetic audio through the real `AirBandDSP` class
-directly (no plugin host involved) and checks the output waveform against
-expected behaviour: a quiet high-frequency tone actually comes out louder,
-a loud one stays near unity, De-Ess actually suppresses sibilant content
-more than broadband content, the compressor actually reduces gain on loud
-material relative to quiet material, and every effect at its transparent
-setting passes audio through unchanged. This exists specifically to catch
-the class of bug where the DSP compiles and every function call succeeds
-but the signal path itself is silently broken.
+`AirBand_Tests` runs the same `airband_core` library that the plugin links, with no
+plugin host involved. Stimuli (`TestSignals`), measurements (`TestMetrics`) and
+specifications are separate files. The specifications cover linear behaviour
+(unity pass-through, impulse response, reported latency), the air bands, the
+gate, compressor and limiter, and safety (extreme input, oversized blocks,
+channel counts). Output must also be bit-identical for every way of cutting the
+input into blocks (1, 64, 128, 512, 511+1+512, 257+255+512 samples), and
+recorded golden vectors in `Tests/GoldenVectors.h` pin the exact output for
+twelve fixed stimuli. The golden hashes were recorded on macOS arm64 in a
+release build and are compared bit for bit there; other platforms compare RMS
+to 5e-4 dB and peak to 1e-6 relative, tolerances set at about ten times the drift
+measured with fused multiply-add disabled.
 
 ```bash
-cmake --build build --target AirBand_Tests
-./build/AirBand_Tests_artefacts/AirBand_Tests
+cmake -S . -B build && cmake --build build --target AirBand_Tests
+./build/AirBand_Tests_artefacts/Release/AirBand_Tests
+./build/AirBand_HostTests_artefacts/Release/AirBand_HostTests   # parameter defaults and host-unit conversion
+scripts/check_realtime.sh     # same tests under clang RealtimeSanitizer (needs Homebrew LLVM)
 ```
+
+A change that is meant to alter the sound must re-record the vectors with
+`AirBand_Tests --record` and say so in the commit; every other change must leave
+them untouched.
 
 ## License
 

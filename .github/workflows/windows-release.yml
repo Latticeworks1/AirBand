@@ -33,6 +33,13 @@ jobs:
         shell: bash
         run: build/AirBand_Tests_artefacts/Release/AirBand_Tests.exe
 
+      - name: Build host parameter tests
+        run: cmake --build build --config Release --target AirBand_HostTests -j 4
+
+      - name: Run host parameter tests
+        shell: bash
+        run: build/AirBand_HostTests_artefacts/Release/AirBand_HostTests.exe
+
       - name: Verify the VST3 needs no Visual C++ Redistributable
         shell: bash
         run: |
