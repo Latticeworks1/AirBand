@@ -8,4 +8,7 @@ namespace tests
     void check (bool condition, const std::string& description);
     void section (const std::string& title);
     int failureCount();
+
+    // Fixed two-digit scientific notation, for drifts and differences.
+    std::string scientific (double value);
 }

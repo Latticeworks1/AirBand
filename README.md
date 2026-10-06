@@ -122,13 +122,16 @@ plugin host involved. Stimuli (`TestSignals`), measurements (`TestMetrics`) and
 specifications are separate files. The specifications cover linear behaviour
 (unity pass-through, impulse response, reported latency), the air bands, the
 gate, compressor and limiter, and safety (extreme input, oversized blocks,
-channel counts). Output must also be bit-identical for every way of cutting the
-input into blocks (1, 64, 128, 512, 511+1+512, 257+255+512 samples), and
-recorded golden vectors in `Tests/GoldenVectors.h` pin the exact output for
-twelve fixed stimuli. The golden hashes were recorded on macOS arm64 in a
-release build and are compared bit for bit there; other platforms compare RMS
-to 5e-4 dB and peak to 1e-6 relative, tolerances set at about ten times the drift
-measured with fused multiply-add disabled.
+channel counts). Output must also be the same for every way of cutting the
+input into blocks (1, 64, 128, 512, 1024, 511+1+512, 257+255+512 samples): bit for
+bit where JUCE's snap-to-zero is a no-op (arm64), and within 1e-7 on Intel CPUs,
+where JUCE zeroes oversampler filter states below 1e-8 once per processing call
+and so depends slightly on where the block cuts fall. Recorded golden vectors in
+`Tests/GoldenVectors.h` pin the exact output for twelve fixed stimuli. The golden
+hashes were recorded on macOS arm64 in a release build and are compared bit for bit
+there; other platforms compare RMS to 5e-4 dB and peak to 1e-6 relative, tolerances
+set at about ten times the drift measured with fused multiply-add disabled. The
+largest drift measured on Windows (MSVC) is 4.9e-5 dB RMS and 1.2e-7 relative peak.
 
 ```bash
 cmake -S . -B build && cmake --build build --target AirBand_Tests

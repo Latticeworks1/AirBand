@@ -25,4 +25,11 @@ namespace tests
     {
         return failures;
     }
+
+    std::string scientific (double value)
+    {
+        char text[32];
+        std::snprintf (text, sizeof text, "%.2e", value);
+        return text;
+    }
 }

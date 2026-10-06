@@ -1,6 +1,8 @@
 #include <string>
 #include <vector>
 
+#include <juce_dsp/juce_dsp.h>
+
 #include "AirBandDSP.h"
 #include "Check.h"
 #include "Harness.h"
@@ -9,14 +11,25 @@
 #include "TestSettings.h"
 
 // The DSP keeps all state per sample and applies parameters only between blocks, so for constant
-// parameters (and parameter changes on a common block boundary) output must be bit-identical for
-// every way of cutting the input into blocks: (y1, s1) = F(x[0:k], s0), (y2, s2) = F(x[k:N], s1)
-// concatenate to F(x[0:N], s0).
+// parameters (and parameter changes on a common block boundary) output is the same for every way
+// of cutting the input into blocks: (y1, s1) = F(x[0:k], s0), (y2, s2) = F(x[k:N], s1) concatenate
+// to F(x[0:N], s0). The same means bit-identical, except for the Intel snap-to-zero below.
 namespace tests
 {
     namespace
     {
         constexpr double kRate = 48000.0;
+
+        // On Intel CPUs JUCE zeroes oversampler filter states below 1e-8 at the end of every processing
+        // call (JUCE_DSP_ENABLE_SNAP_TO_ZERO), so the block cuts decide when a decaying state is flushed.
+        // That perturbs the output by about one snap threshold, never more. Everywhere else the snap is
+        // a no-op and every partition is bit-identical. Ten thresholds is the allowed difference there.
+        double partitionTolerance()
+        {
+            float probe = 1.0e-9f;
+            juce::dsp::util::snapToZero (probe);
+            return probe == 0.0f ? 1.0e-7 : 0.0;
+        }
 
         struct Partition
         {
@@ -55,9 +68,11 @@ namespace tests
                 RenderOptions options = reference;
                 options.partition = partition.blocks;
                 const auto actual = render (input, settings, options).output;
-                check (countDifferent (actual, expected) == 0,
-                       std::string (label) + ", blocks " + partition.name + ": identical to one-block-size reference ("
-                           + std::to_string (countDifferent (actual, expected)) + " samples differ)");
+                const double worst = maxAbsDifference (actual, expected);
+                check (worst <= partitionTolerance(),
+                       std::string (label) + ", blocks " + partition.name + ": matches the one-block-size reference ("
+                           + std::to_string (countDifferent (actual, expected)) + " samples differ, largest difference "
+                           + scientific (worst) + ")");
             }
         }
     }

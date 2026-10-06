@@ -1,5 +1,4 @@
 #include <cmath>
-#include <cstdio>
 #include <string>
 
 #include "Check.h"
@@ -24,13 +23,6 @@ namespace tests
 #else
             false;
 #endif
-
-        std::string scientific (double value)
-        {
-            char text[32];
-            std::snprintf (text, sizeof text, "%.2e", value);
-            return text;
-        }
 
         const GoldenVector* find (const std::string& name)
         {
