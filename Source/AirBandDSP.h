@@ -53,6 +53,11 @@ private:
     int preparedMaxBlockSize = 0;
     int preparedChannels = 0;
 
-    float blendAmount = 0.2f;
-    float outputGainLinear = 1.0f;
+    // Host automation arrives as steps at block boundaries; the gains glide to each new value
+    // over kGlideSeconds. Per-sample values are staged in the ramps so every channel sees the same gain.
+    static constexpr double kGlideSeconds = 0.02;
+    juce::SmoothedValue<float> blend { 0.2f };
+    juce::SmoothedValue<float> outputGain { 1.0f };
+    std::vector<float> blendRamp, gainRamp;
+    bool parametersApplied = false;
 };

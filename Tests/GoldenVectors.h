@@ -19,7 +19,7 @@ namespace tests
     { "two_tone", 0x15971d40d91506cdull, -18.762935, 0.407637805 },
     { "noise", 0x8d1d44d1d46cf892ull, -17.627340, 0.505658925 },
     { "amplitude_steps", 0xf9d321b19163b153ull, -18.108441, 0.702545226 },
-    { "parameter_steps", 0xb4d41de18bcd6b80ull, -18.027003, 0.505658925 },
+    { "parameter_steps", 0xd9ab08064c44f609ull, -18.072660, 0.505658925 },
     { "block_edge_transients", 0x808760cde838eec2ull, -32.744135, 0.707945764 },
     { "sustained_10s", 0x120b4b0037fd077dull, -15.745061, 0.428376436 },
     { "settings_minimum", 0x901fbf5754ce762dull, -16.813794, 0.251188636 },

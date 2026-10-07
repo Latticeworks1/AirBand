@@ -1,4 +1,5 @@
 #include "AirBandDSP.h"
+#include "Sanitize.h"
 
 void AirBandDSP::prepare (double sampleRate, int maxBlockSize, int numChannels)
 {
@@ -23,6 +24,15 @@ void AirBandDSP::prepare (double sampleRate, int maxBlockSize, int numChannels)
 
     midAir.setSize (numChannels, maxBlockSize);
     highAir.setSize (numChannels, maxBlockSize);
+
+    const AirBandSettings defaults;
+    blend.reset (sampleRate, kGlideSeconds);
+    outputGain.reset (sampleRate, kGlideSeconds);
+    blend.setCurrentAndTargetValue (defaults.blend);
+    outputGain.setCurrentAndTargetValue (juce::Decibels::decibelsToGain (defaults.outputDb));
+    blendRamp.assign ((size_t) maxBlockSize, 0.0f);
+    gainRamp.assign ((size_t) maxBlockSize, 0.0f);
+    parametersApplied = false;
 }
 
 void AirBandDSP::reset()
@@ -53,8 +63,19 @@ void AirBandDSP::setParameters (const AirBandSettings& settings) AIRBAND_NONBLOC
     compressor.setAmount (settings.compAmount);
     limiter.setCeilingDb (settings.limiterCeilingDb);
 
-    blendAmount = settings.blend;
-    outputGainLinear = juce::Decibels::decibelsToGain (settings.outputDb);
+    // The first call after prepare() sets the gains outright so playback does not open with a glide.
+    const float gain = juce::Decibels::decibelsToGain (settings.outputDb);
+    if (parametersApplied)
+    {
+        blend.setTargetValue (settings.blend);
+        outputGain.setTargetValue (gain);
+    }
+    else
+    {
+        blend.setCurrentAndTargetValue (settings.blend);
+        outputGain.setCurrentAndTargetValue (gain);
+        parametersApplied = true;
+    }
 }
 
 void AirBandDSP::processBlock (juce::AudioBuffer<float>& buffer) AIRBAND_NONBLOCKING
@@ -67,6 +88,9 @@ void AirBandDSP::processBlock (juce::AudioBuffer<float>& buffer) AIRBAND_NONBLOC
 
     // The chunk views the host buffer; the external-data constructor and its destructor never allocate.
     AIRBAND_UNCHECKED_BEGIN
+    for (int ch = 0; ch < numChannels; ++ch)
+        zeroNonFinite (buffer.getWritePointer (ch), numSamples);
+
     for (int start = 0; start < numSamples; start += preparedMaxBlockSize)
     {
         juce::AudioBuffer<float> chunk (buffer.getArrayOfWritePointers(), numChannels, start,
@@ -87,6 +111,12 @@ void AirBandDSP::processChunk (juce::AudioBuffer<float>& buffer) AIRBAND_NONBLOC
     gate.process (buffer);
     compressor.process (buffer);
 
+    for (int i = 0; i < numSamples; ++i)
+    {
+        blendRamp[(size_t) i] = blend.getNextValue();
+        gainRamp[(size_t) i] = outputGain.getNextValue();
+    }
+
     for (int ch = 0; ch < numChannels; ++ch)
     {
         auto* channelData = buffer.getWritePointer (ch);
@@ -99,8 +129,8 @@ void AirBandDSP::processChunk (juce::AudioBuffer<float>& buffer) AIRBAND_NONBLOC
         for (int i = 0; i < numSamples; ++i)
         {
             const float dry = channelData[i];
-            const float air = (midOut[i] + highOut[i]) * blendAmount;
-            channelData[i] = (dry + air) * outputGainLinear;
+            const float air = (midOut[i] + highOut[i]) * blendRamp[(size_t) i];
+            channelData[i] = (dry + air) * gainRamp[(size_t) i];
         }
     }
 

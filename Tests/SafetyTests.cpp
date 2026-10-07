@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <string>
 
 #include "AirBandDSP.h"
@@ -83,6 +84,59 @@ namespace tests
                                                                               + std::to_string (peak (output)) + ")");
         }
 
+        void nonFiniteInput()
+        {
+            section ("Safety 5: NaN and infinite input samples are treated as silence");
+            const auto input = makeNoise (48000, 0.2f, 17u);
+            const auto expected = render (input, featureSettings()).output;
+
+            for (const float bad : { std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::infinity(),
+                                     -std::numeric_limits<float>::infinity() })
+            {
+                auto poisoned = input;
+                auto silenced = input;
+                poisoned[10000] = bad;
+                silenced[10000] = 0.0f;
+                const auto actual = render (poisoned, featureSettings()).output;
+                check (allFinite (actual), "output stays finite after a " + std::to_string (bad) + " sample");
+                check (countDifferent (actual, render (silenced, featureSettings()).output) == 0,
+                       "a " + std::to_string (bad) + " sample gives the same output as a zero sample");
+            }
+            for (const float big : { 1.0e30f, -3.0e38f })
+            {
+                auto spiked = input;
+                spiked[10000] = big;
+                check (allFinite (render (spiked, featureSettings()).output), "output stays finite after a " + std::to_string (big) + " sample");
+            }
+            check (countDifferent (expected, render (input, featureSettings()).output) == 0, "finite input is unaffected");
+        }
+
+        // A block-boundary change of the output gain must glide, not step. A constant input has no
+        // slope of its own, so any single-sample jump in the output is the gain change itself.
+        void gainGlide()
+        {
+            section ("Safety 6: output gain and blend changes glide instead of stepping");
+            const int stepAt = 4 * 512;
+            const Signal input ((size_t) (8 * 512), 0.1f);
+            auto louder = featureSettings();
+            louder.outputDb += 10.0f;
+            louder.blend = 1.0f;
+
+            RenderOptions options;
+            options.steps = { { stepAt, louder } };
+            const auto stepped = render (input, featureSettings(), options).output;
+
+            // The limiter delays the change by its lookahead; the glide then lasts 20 ms.
+            const size_t from = (size_t) stepAt, to = from + 1500;
+            double largestJump = 0.0;
+            for (size_t i = from; i < to; ++i)
+                largestJump = std::max (largestJump, (double) std::abs (stepped[i] - stepped[i - 1]));
+            const double change = (double) std::abs (stepped[to - 1] - stepped[from + 50]);
+
+            check (change > 0.1, "the output level moved by " + std::to_string (change) + " across the +10 dB change");
+            check (largestJump < 0.05 * change, "largest single-sample jump is " + std::to_string (largestJump / change) + " of the total change");
+        }
+
         void degenerateCalls()
         {
             section ("Safety 4: degenerate calls are harmless");
@@ -106,5 +160,7 @@ namespace tests
         oversizedBlock();
         channelTopology();
         degenerateCalls();
+        nonFiniteInput();
+        gainGlide();
     }
 }
