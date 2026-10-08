@@ -13,7 +13,9 @@ namespace host
     inline constexpr auto deEssId = "deEss";
     inline constexpr auto compId = "comp";
     inline constexpr auto gateId = "gate";
+    inline constexpr auto gateThresholdId = "gateThreshold";
     inline constexpr auto limiterId = "limiter";
+    inline constexpr auto levelTrackingId = "levelTracking";
 
     // Defaults come from AirBandSettings{}.
     juce::AudioProcessorValueTreeState::ParameterLayout createLayout();

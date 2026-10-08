@@ -1,0 +1,136 @@
+VocalRenderProbe over the whole 155 s recording; arguments: midAirDb highAirDb blend deEss comp gate gateThresholdDb start dur refRms inputGainDb levelTracking
+v1.3.2 is the release (a2cd1e4); 'knees -6/-6' and 'knees -20/-32' are the current code with the design references moved so that the knee (5 dB above the reference) lies there, with tracking off
+== A dry (Air 0, comp 0, gate 0)
+latency 270 samples, RMS -27.16 dB (raw), match gain 0.00 dB, peak -7.4 dBFS
+  input  frame levels (dBFS) P10/P50/P90/P99/max: -45.6 -27.8 -22.7 -20.1 -17.9 (2603 frames)
+  output frame levels (dBFS) P10/P50/P90/P99/max: -45.6 -27.8 -22.7 -20.1 -17.9 (2603 frames)
+  3 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 0.00  middle 0.00  loudest third 0.00  (quiet minus loud 0.00)
+  9 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 0.00  middle 0.00  loudest third 0.00  (quiet minus loud 0.00)
+== B v1.3.2, Air 9/9, blend .4, De-Ess .5
+latency 221 samples, RMS -27.19 dB (raw), match gain 0.00 dB, peak -6.8 dBFS
+  input  frame levels (dBFS) P10/P50/P90/P99/max: -45.6 -27.8 -22.7 -20.1 -17.9 (2603 frames)
+  output frame levels (dBFS) P10/P50/P90/P99/max: -45.5 -27.8 -22.7 -20.1 -17.9 (2610 frames)
+  3 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 1.25  middle 1.47  loudest third 1.59  (quiet minus loud -0.34)
+  9 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third -3.11  middle -3.60  loudest third -4.25  (quiet minus loud 1.14)
+== C current knees -26/-38, tracking off
+latency 270 samples, RMS -27.20 dB (raw), match gain 0.00 dB, peak -7.4 dBFS
+  input  frame levels (dBFS) P10/P50/P90/P99/max: -45.6 -27.8 -22.7 -20.1 -17.9 (2603 frames)
+  output frame levels (dBFS) P10/P50/P90/P99/max: -45.5 -27.8 -22.7 -20.1 -17.9 (2603 frames)
+  3 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 1.57  middle 1.20  loudest third 0.50  (quiet minus loud 1.07)
+  9 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 3.38  middle 2.72  loudest third 1.64  (quiet minus loud 1.74)
+== D knees -6/-6, tracking off
+latency 270 samples, RMS -27.25 dB (raw), match gain 0.00 dB, peak -8.1 dBFS
+  input  frame levels (dBFS) P10/P50/P90/P99/max: -45.6 -27.8 -22.7 -20.1 -17.9 (2603 frames)
+  output frame levels (dBFS) P10/P50/P90/P99/max: -45.3 -27.8 -22.8 -20.2 -18.1 (2604 frames)
+  3 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 2.46  middle 2.45  loudest third 2.06  (quiet minus loud 0.40)
+  9 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 4.98  middle 4.92  loudest third 4.51  (quiet minus loud 0.47)
+== E knees -20/-32, tracking off
+latency 270 samples, RMS -27.23 dB (raw), match gain 0.00 dB, peak -7.5 dBFS
+  input  frame levels (dBFS) P10/P50/P90/P99/max: -45.6 -27.8 -22.7 -20.1 -17.9 (2603 frames)
+  output frame levels (dBFS) P10/P50/P90/P99/max: -45.4 -27.8 -22.8 -20.2 -18.0 (2603 frames)
+  3 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 2.02  middle 1.81  loudest third 1.13  (quiet minus loud 0.89)
+  9 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 4.21  middle 3.84  loudest third 2.96  (quiet minus loud 1.25)
+== F current knees, Air 14/14, tracking off
+latency 270 samples, RMS -27.24 dB (raw), match gain 0.00 dB, peak -7.4 dBFS
+  input  frame levels (dBFS) P10/P50/P90/P99/max: -45.6 -27.8 -22.7 -20.1 -17.9 (2603 frames)
+  output frame levels (dBFS) P10/P50/P90/P99/max: -45.2 -27.8 -22.8 -20.1 -17.9 (2604 frames)
+  3 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 3.89  middle 3.04  loudest third 1.31  (quiet minus loud 2.57)
+  9 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 6.62  middle 5.49  loudest third 3.41  (quiet minus loud 3.21)
+== G tracking on, input -12 dB, Air 9/9
+latency 270 samples, RMS -39.20 dB (raw), match gain 0.00 dB, peak -19.4 dBFS
+  input  frame levels (dBFS) P10/P50/P90/P99/max: -48.3 -39.2 -34.6 -32.0 -29.9 (2390 frames)
+  output frame levels (dBFS) P10/P50/P90/P99/max: -48.3 -39.2 -34.6 -32.0 -29.9 (2391 frames)
+  3 kHz band lift (dB), 2003 active frames ranked by the band's own level: quietest third 1.41  middle 1.01  loudest third 0.49  (quiet minus loud 0.92)
+  9 kHz band lift (dB), 2003 active frames ranked by the band's own level: quietest third 3.24  middle 2.53  loudest third 1.71  (quiet minus loud 1.53)
+== H tracking off, input -12 dB, Air 9/9
+latency 270 samples, RMS -39.24 dB (raw), match gain 0.00 dB, peak -19.7 dBFS
+  input  frame levels (dBFS) P10/P50/P90/P99/max: -48.3 -39.2 -34.6 -32.0 -29.9 (2390 frames)
+  output frame levels (dBFS) P10/P50/P90/P99/max: -48.1 -39.2 -34.7 -32.1 -30.0 (2393 frames)
+  3 kHz band lift (dB), 2003 active frames ranked by the band's own level: quietest third 2.20  middle 2.12  loudest third 1.65  (quiet minus loud 0.55)
+  9 kHz band lift (dB), 2003 active frames ranked by the band's own level: quietest third 4.62  middle 4.46  loudest third 4.02  (quiet minus loud 0.60)
+== G tracking on, input 0 dB, Air 9/9
+latency 270 samples, RMS -27.20 dB (raw), match gain 0.00 dB, peak -7.4 dBFS
+  input  frame levels (dBFS) P10/P50/P90/P99/max: -45.6 -27.8 -22.7 -20.1 -17.9 (2603 frames)
+  output frame levels (dBFS) P10/P50/P90/P99/max: -45.5 -27.8 -22.7 -20.1 -17.9 (2603 frames)
+  3 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 1.48  middle 1.06  loudest third 0.49  (quiet minus loud 0.99)
+  9 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 3.30  middle 2.53  loudest third 1.60  (quiet minus loud 1.70)
+== H tracking off, input 0 dB, Air 9/9
+latency 270 samples, RMS -27.20 dB (raw), match gain 0.00 dB, peak -7.4 dBFS
+  input  frame levels (dBFS) P10/P50/P90/P99/max: -45.6 -27.8 -22.7 -20.1 -17.9 (2603 frames)
+  output frame levels (dBFS) P10/P50/P90/P99/max: -45.5 -27.8 -22.7 -20.1 -17.9 (2603 frames)
+  3 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 1.57  middle 1.20  loudest third 0.50  (quiet minus loud 1.07)
+  9 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 3.38  middle 2.72  loudest third 1.64  (quiet minus loud 1.74)
+== G tracking on, input 6 dB, Air 9/9
+latency 270 samples, RMS -21.20 dB (raw), match gain 0.00 dB, peak -1.4 dBFS
+  input  frame levels (dBFS) P10/P50/P90/P99/max: -43.3 -22.0 -16.7 -14.1 -11.9 (2679 frames)
+  output frame levels (dBFS) P10/P50/P90/P99/max: -43.2 -22.0 -16.8 -14.1 -11.9 (2680 frames)
+  3 kHz band lift (dB), 2438 active frames ranked by the band's own level: quietest third 1.49  middle 1.07  loudest third 0.50  (quiet minus loud 0.99)
+  9 kHz band lift (dB), 2438 active frames ranked by the band's own level: quietest third 3.31  middle 2.50  loudest third 1.60  (quiet minus loud 1.70)
+== H tracking off, input 6 dB, Air 9/9
+latency 270 samples, RMS -21.17 dB (raw), match gain 0.00 dB, peak -1.4 dBFS
+  input  frame levels (dBFS) P10/P50/P90/P99/max: -43.3 -22.0 -16.7 -14.1 -11.9 (2679 frames)
+  output frame levels (dBFS) P10/P50/P90/P99/max: -43.3 -22.0 -16.7 -14.1 -11.9 (2680 frames)
+  3 kHz band lift (dB), 2438 active frames ranked by the band's own level: quietest third 0.97  middle 0.50  loudest third 0.10  (quiet minus loud 0.87)
+  9 kHz band lift (dB), 2438 active frames ranked by the band's own level: quietest third 2.15  middle 1.27  loudest third 0.45  (quiet minus loud 1.71)
+== I De-Ess 0, Air 9/9, tracking on
+latency 270 samples, RMS -27.20 dB (raw), match gain 0.00 dB, peak -7.4 dBFS
+  input  frame levels (dBFS) P10/P50/P90/P99/max: -45.6 -27.8 -22.7 -20.1 -17.9 (2603 frames)
+  output frame levels (dBFS) P10/P50/P90/P99/max: -45.5 -27.8 -22.7 -20.1 -17.9 (2604 frames)
+  3 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 1.48  middle 1.07  loudest third 0.51  (quiet minus loud 0.97)
+  9 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 3.30  middle 2.54  loudest third 1.64  (quiet minus loud 1.66)
+== I De-Ess 0.5, Air 9/9, tracking on
+latency 270 samples, RMS -27.20 dB (raw), match gain 0.00 dB, peak -7.4 dBFS
+  input  frame levels (dBFS) P10/P50/P90/P99/max: -45.6 -27.8 -22.7 -20.1 -17.9 (2603 frames)
+  output frame levels (dBFS) P10/P50/P90/P99/max: -45.5 -27.8 -22.7 -20.1 -17.9 (2603 frames)
+  3 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 1.48  middle 1.06  loudest third 0.49  (quiet minus loud 0.99)
+  9 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 3.30  middle 2.53  loudest third 1.60  (quiet minus loud 1.70)
+== I De-Ess 1, Air 9/9, tracking on
+latency 270 samples, RMS -27.20 dB (raw), match gain 0.00 dB, peak -7.4 dBFS
+  input  frame levels (dBFS) P10/P50/P90/P99/max: -45.6 -27.8 -22.7 -20.1 -17.9 (2603 frames)
+  output frame levels (dBFS) P10/P50/P90/P99/max: -45.5 -27.8 -22.7 -20.1 -17.9 (2603 frames)
+  3 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 1.48  middle 1.06  loudest third 0.47  (quiet minus loud 1.01)
+  9 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 3.29  middle 2.52  loudest third 1.56  (quiet minus loud 1.73)
+== J v1.3.2, Air 0/0, blend .2, De-Ess .5
+latency 221 samples, RMS -27.16 dB (raw), match gain 0.00 dB, peak -7.4 dBFS
+  input  frame levels (dBFS) P10/P50/P90/P99/max: -45.6 -27.8 -22.7 -20.1 -17.9 (2603 frames)
+  output frame levels (dBFS) P10/P50/P90/P99/max: -45.6 -27.8 -22.7 -20.1 -17.9 (2603 frames)
+  3 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 0.06  middle 0.05  loudest third 0.02  (quiet minus loud 0.03)
+  9 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 0.34  middle 0.37  loudest third 0.36  (quiet minus loud -0.02)
+== K current, Air 0/0, blend .2, De-Ess .5
+latency 270 samples, RMS -27.16 dB (raw), match gain 0.00 dB, peak -7.4 dBFS
+  input  frame levels (dBFS) P10/P50/P90/P99/max: -45.6 -27.8 -22.7 -20.1 -17.9 (2603 frames)
+  output frame levels (dBFS) P10/P50/P90/P99/max: -45.6 -27.8 -22.7 -20.1 -17.9 (2603 frames)
+  3 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 0.00  middle 0.00  loudest third 0.00  (quiet minus loud 0.00)
+  9 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 0.00  middle 0.00  loudest third 0.00  (quiet minus loud 0.00)
+== L v1.3.2, comp 100%
+latency 221 samples, RMS -21.39 dB (raw), match gain 0.00 dB, peak -1.9 dBFS
+  input  frame levels (dBFS) P10/P50/P90/P99/max: -45.6 -27.8 -22.7 -20.1 -17.9 (2603 frames)
+  output frame levels (dBFS) P10/P50/P90/P99/max: -43.3 -22.0 -17.0 -15.3 -13.8 (2679 frames)
+  3 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 5.98  middle 5.96  loudest third 5.81  (quiet minus loud 0.17)
+  9 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 5.95  middle 5.93  loudest third 5.87  (quiet minus loud 0.08)
+== M current, comp 100%
+latency 270 samples, RMS -26.49 dB (raw), match gain 0.00 dB, peak -6.9 dBFS
+  input  frame levels (dBFS) P10/P50/P90/P99/max: -45.6 -27.8 -22.7 -20.1 -17.9 (2603 frames)
+  output frame levels (dBFS) P10/P50/P90/P99/max: -45.1 -26.4 -22.5 -21.1 -19.6 (2642 frames)
+  3 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 1.68  middle 1.25  loudest third 0.68  (quiet minus loud 1.00)
+  9 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 1.54  middle 1.18  loudest third 0.93  (quiet minus loud 0.61)
+== N current, comp 50%
+latency 270 samples, RMS -26.66 dB (raw), match gain 0.00 dB, peak -7.1 dBFS
+  input  frame levels (dBFS) P10/P50/P90/P99/max: -45.6 -27.8 -22.7 -20.1 -17.9 (2603 frames)
+  output frame levels (dBFS) P10/P50/P90/P99/max: -45.0 -26.7 -22.6 -21.0 -19.6 (2630 frames)
+  3 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 1.34  middle 1.00  loudest third 0.54  (quiet minus loud 0.80)
+  9 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 1.23  middle 0.94  loudest third 0.75  (quiet minus loud 0.49)
+== O current, comp 100%, tracking off
+latency 270 samples, RMS -26.42 dB (raw), match gain 0.00 dB, peak -7.3 dBFS
+  input  frame levels (dBFS) P10/P50/P90/P99/max: -45.6 -27.8 -22.7 -20.1 -17.9 (2603 frames)
+  output frame levels (dBFS) P10/P50/P90/P99/max: -45.1 -25.9 -22.7 -21.3 -19.9 (2642 frames)
+  3 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 1.78  middle 1.53  loudest third 0.80  (quiet minus loud 0.98)
+  9 kHz band lift (dB), 2330 active frames ranked by the band's own level: quietest third 1.61  middle 1.44  loudest third 1.11  (quiet minus loud 0.50)
+
+Gate (level change by frame RMS, dBFS bands)
+== v1.3.2 gate .6
+  level change by frame RMS (dBFS):  [-90,-60): -0.95 dB (279)  [-60,-50): -0.18 dB (178)  [-50,-45): -0.09 dB (95)  [-45,-40): -0.04 dB (87)  [-40,-35): -0.00 dB (137)  [-35,-25): -0.00 dB (1407)  [-25,0): -0.00 dB (699)
+== current gate .6, threshold -40
+  level change by frame RMS (dBFS):  [-90,-60): -6.03 dB (279)  [-60,-50): -2.78 dB (178)  [-50,-45): -1.02 dB (95)  [-45,-40): -0.26 dB (87)  [-40,-35): -0.13 dB (137)  [-35,-25): -0.01 dB (1407)  [-25,0): -0.00 dB (699)
+== current gate .6, threshold -34
+  level change by frame RMS (dBFS):  [-90,-60): -7.28 dB (279)  [-60,-50): -4.42 dB (178)  [-50,-45): -3.00 dB (95)  [-45,-40): -0.98 dB (87)  [-40,-35): -0.36 dB (137)  [-35,-25): -0.03 dB (1407)  [-25,0): -0.00 dB (699)

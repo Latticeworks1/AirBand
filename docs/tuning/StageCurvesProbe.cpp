@@ -7,6 +7,7 @@
 #include <juce_dsp/juce_dsp.h>
 
 #include "EnvelopeDetector.h"
+#include "SibilanceDetector.h"
 #include "Harness.h"
 #include "TestMetrics.h"
 #include "TestSettings.h"
@@ -54,29 +55,19 @@ namespace
         return std::sqrt (sum / (double) (x.size() - (size_t) from));
     }
 
-    // The sibilance ratio exactly as AirBand::processSample forms it (unclamped), averaged over the last second.
-    double sibilanceRatio (const Signal& x)
+    // The production SibilanceDetector's output (0 to 1), averaged over the last second.
+    double sibilance (const Signal& x)
     {
-        juce::dsp::IIR::Filter<float> hp, bp;
-        hp.coefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass (kDefaultRate, 9000.0f, 0.707f);
-        bp.coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass (kDefaultRate, 6500.0f, 1.2f);
-        EnvelopeDetector env, sib;
-        env.prepare (kDefaultRate, 0.002f, 0.0003f, 0.15f);
-        sib.prepare (kDefaultRate, 0.001f, 0.001f, 0.05f);
-
+        SibilanceDetector detector;
+        detector.prepare (kDefaultRate);
         double acc = 0.0;
-        int n = 0;
         for (size_t i = 0; i < x.size(); ++i)
         {
-            const float e = env.pushSample (std::abs (hp.processSample (x[i])));
-            const float s = sib.pushSample (std::abs (bp.processSample (x[i])));
+            const float value = detector.process (x[i]);
             if ((int) i >= (int) x.size() - (int) kDefaultRate)
-            {
-                acc += (double) s / std::max ((double) e, 1.0e-6);
-                ++n;
-            }
+                acc += (double) value;
         }
-        return acc / n;
+        return acc / kDefaultRate;
     }
 }
 
@@ -170,34 +161,39 @@ int main()
         std::printf ("\n");
     }
 
-    std::printf ("\n== D. Sibilance ratio as AirBand forms it (6.5 kHz bandpass level / 9 kHz highpass band level, unclamped) ==\n");
+    std::printf ("\n== D. Sibilance measure (SibilanceDetector output, 0 to 1) ==\n");
     {
         struct Case { const char* name; Signal x; };
         std::vector<Case> cases;
         cases.push_back ({ "white noise (broadband)", makeNoise (kLen, 0.1f, 11) });
+        cases.push_back ({ "noise below 1.5 kHz (voiced)", bandNoise (0, 1500, 0.2f, 16) });
         cases.push_back ({ "noise 3-6 kHz (male sibilance)", bandNoise (3000, 6000, 0.2f, 12) });
         cases.push_back ({ "noise 5-8 kHz (female sibilance)", bandNoise (5000, 8000, 0.2f, 13) });
         cases.push_back ({ "noise 4-9 kHz", bandNoise (4000, 9000, 0.2f, 14) });
         cases.push_back ({ "noise 10-16 kHz (air)", bandNoise (10000, 16000, 0.2f, 15) });
+        cases.push_back ({ "sine 1 kHz", makeSine (1000.0, 0.1f, kLen) });
         cases.push_back ({ "sine 5 kHz", makeSine (5000.0, 0.1f, kLen) });
         cases.push_back ({ "sine 6.5 kHz", makeSine (6500.0, 0.1f, kLen) });
+        cases.push_back ({ "sine 10 kHz", makeSine (10000.0, 0.1f, kLen) });
         cases.push_back ({ "sine 12 kHz", makeSine (12000.0, 0.1f, kLen) });
         for (const auto& c : cases)
-            std::printf ("%-34s ratio %.3f\n", c.name, sibilanceRatio (c.x));
+            std::printf ("%-34s %.3f\n", c.name, sibilance (c.x));
     }
 
-    std::printf ("\n== E. What the de-ess knob does to the 9 kHz+ band: output change of band noise, highAir 15, blend .2 ==\n");
+    std::printf ("\n== E. What the de-ess knob does: output change of band noise at -66 dBFS rms (under the knees), Mid and High Air 15, blend .2 ==\n");
     {
         struct Case { const char* name; Signal x; };
         std::vector<Case> cases;
-        cases.push_back ({ "noise 5-8 kHz", bandNoise (5000, 8000, 0.2f, 13) });
-        cases.push_back ({ "noise 10-16 kHz", bandNoise (10000, 16000, 0.2f, 15) });
+        cases.push_back ({ "noise 5-8 kHz", bandNoise (5000, 8000, (float) dbfs (-66) * 1.7f, 13) });
+        cases.push_back ({ "noise 10-16 kHz", bandNoise (10000, 16000, (float) dbfs (-66) * 1.7f, 15) });
+        cases.push_back ({ "noise below 1.5 kHz", bandNoise (0, 1500, (float) dbfs (-66) * 1.7f, 16) });
         for (const auto& c : cases)
         {
-            std::printf ("%-18s", c.name);
+            std::printf ("%-20s", c.name);
             for (float d : { 0.0f, 0.5f, 1.0f })
             {
                 auto s = transparentSettings();
+                s.midAirDb = 15.0f;
                 s.highAirDb = 15.0f;
                 s.deEssAmount = d;
                 std::printf ("  deEss %.1f: %6.2f dB", d, delta (c.x, s));
@@ -206,13 +202,15 @@ int main()
         }
     }
 
-    std::printf ("\n== F. Mid band touches sibilance: 5-8 kHz noise through the mid band (midAir 15, blend .2), vs level ==\n");
+    std::printf ("\n== F. Mid band on sibilance: 5-8 kHz noise through the mid band (midAir 15, blend .2), vs level, De-Ess 0 and 1 ==\n");
     for (int level = -60; level <= -12; level += 12)
     {
         const auto x = bandNoise (5000, 8000, (float) dbfs (level) * 1.7f, 21);
         auto s = transparentSettings();
         s.midAirDb = 15.0f;
-        std::printf ("noise rms %6.1f dBFS: %6.2f dB\n", 20.0 * std::log10 (rms (x, kSettle)), delta (x, s));
+        const double without = delta (x, s);
+        s.deEssAmount = 1.0f;
+        std::printf ("noise rms %6.1f dBFS: %6.2f dB | %6.2f dB\n", 20.0 * std::log10 (rms (x, kSettle)), without, delta (x, s));
     }
     return 0;
 }

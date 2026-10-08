@@ -24,6 +24,20 @@ namespace tests
         return result;
     }
 
+    double toneDb (const Samples& samples, double frequencyHz, double sampleRate, int startSample)
+    {
+        double sine = 0.0, cosine = 0.0;
+        const double step = 2.0 * 3.14159265358979323846 * frequencyHz / sampleRate;
+        for (size_t i = (size_t) startSample; i < samples.size(); ++i)
+        {
+            sine += (double) samples[i] * std::sin (step * (double) i);
+            cosine += (double) samples[i] * std::cos (step * (double) i);
+        }
+
+        const double count = (double) std::max<size_t> (1, samples.size() - (size_t) startSample);
+        return 20.0 * std::log10 (std::max (2.0 * std::sqrt (sine * sine + cosine * cosine) / count, 1.0e-12));
+    }
+
     double maxAbsDifference (const Samples& a, const Samples& b)
     {
         double result = 0.0;

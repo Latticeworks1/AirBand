@@ -13,6 +13,11 @@ struct AirBandSettings
     float compAmount = 0.0f;
     float gateAmount = 0.0f;
     float limiterCeilingDb = 0.0f;
+    float gateThresholdDb = -40.0f; // dBFS; the level below which the gate expands
+
+    // The air knees and the compressor threshold follow the level of the material (see LevelTracker.h); off holds
+    // them at their design values.
+    bool levelTracking = true;
 
     bool operator== (const AirBandSettings&) const = default;
 };

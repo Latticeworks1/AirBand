@@ -7,6 +7,7 @@
 #include "Realtime.h"
 #include "AirBandSettings.h"
 #include "VocalCompressor.h"
+#include "SibilanceDetector.h"
 #include "VocalGate.h"
 #include "VocalLimiter.h"
 
@@ -28,10 +29,17 @@ public:
     // prepared count are passed through. Never allocates.
     void processBlock (juce::AudioBuffer<float>& buffer) AIRBAND_NONBLOCKING;
 
-    // The lookahead limiter delays the signal; the host must be told so
-    // via AudioProcessor::setLatencySamples() or AirBand will drift out of
+    // The lookahead limiter and the alignment delay of the dry signal (see
+    // airLatency) both delay the signal; the host must be told so via
+    // AudioProcessor::setLatencySamples() or AirBand will drift out of
     // sync with unprocessed tracks.
-    int getLatencySamples() const { return limiter.getLatencySamples(); }
+    int getLatencySamples() const { return limiter.getLatencySamples() + airLatency; }
+
+    // The gain in dB that the settings give a steady tone of the given frequency when it is far enough under the
+    // air knees for the boost to be at its maximum (De-Ess, the compressor, the gate and the limiter play no part).
+    // This is the sum of the dry path and the blended Mid and High Air paths, whose high-passes lead in phase, so
+    // it is not simply the Air knobs' dB values: the knobs are the boost at 100 percent blend.
+    static float lowLevelGainDb (const AirBandSettings& settings, double frequencyHz, double sampleRate);
 
 private:
     // One filter/envelope state per channel, so a stereo signal doesn't
@@ -40,6 +48,10 @@ private:
     // the vector itself can't relocate AirBand instances directly.
     std::vector<std::unique_ptr<AirBand>> midBands;   // ~3 kHz highpass, "band 3" in the Dolby A patent
     std::vector<std::unique_ptr<AirBand>> highBands;  // ~9 kHz highpass, "band 4"
+
+    // One sibilance measure per channel, shared by both bands.
+    std::vector<SibilanceDetector> sibilanceDetectors;
+    juce::AudioBuffer<float> sibilance;
 
     VocalGate gate;
     VocalCompressor compressor;
@@ -52,6 +64,24 @@ private:
 
     int preparedMaxBlockSize = 0;
     int preparedChannels = 0;
+
+    // The air bands delay their contribution by airLatency samples (their oversampler's filter), so
+    // the dry signal is held back by the same amount per channel before the two are summed.
+    int airLatency = 0;
+    std::vector<std::vector<float>> dryDelay;
+    std::vector<int> dryDelayPosition;
+
+    // Each band's boost law has its knee kKneeAboveReferenceDb above a reference level: the 90th percentile of the
+    // band's own envelope (AirBand's detector, dBFS), tracked while the plugin runs and held at these design values
+    // when Auto Level is off. The design values were measured on a 155 s phone vocal recording tracked at a
+    // broadband median of -20 dBFS: the 3 kHz band's 90th percentile was -31.1 dBFS and the 9 kHz band's -43.0 dBFS,
+    // against medians of -38.6 and -50.6 and 99th percentiles of -25.2 and -33.3. A knee 5 dB above the 90th
+    // percentile is 12 dB above the median, which collapses the boost on the loudest 1 percent of the material and
+    // leaves about half of it at the median, so loud consonants pass near unity and quiet detail is lifted; a knee
+    // above the 99th percentile would leave the boost static. One recording; not swept by ear.
+    static constexpr float kMidReferenceDb = -31.0f;
+    static constexpr float kHighReferenceDb = -43.0f;
+    static constexpr float kKneeAboveReferenceDb = 5.0f;
 
     // Host automation arrives as steps at block boundaries; the gains glide to each new value
     // over kGlideSeconds. Per-sample values are staged in the ramps so every channel sees the same gain.

@@ -10,6 +10,10 @@ namespace tests
 
     double rmsDb (const Samples& samples, int startSample = 0);
     double peak (const Samples& samples, int startSample = 0);
+
+    // Level in dB of the component at one frequency, from the correlation with a sine and a cosine over the samples
+    // from startSample on.
+    double toneDb (const Samples& samples, double frequencyHz, double sampleRate, int startSample = 0);
     double maxAbsDifference (const Samples& a, const Samples& b);
     bool allFinite (const Samples& samples);
     int countDifferent (const Samples& a, const Samples& b);

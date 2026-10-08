@@ -66,6 +66,27 @@ namespace tests
         return signal;
     }
 
+    Signal makeLevelBursts (int length, int burstLength, double lowDb, double highDb, unsigned seed)
+    {
+        const auto noise = makeNoise (length, 1.0f, seed);
+        unsigned state = seed * 2654435761u + 1u;
+        Signal signal ((size_t) length);
+        float amplitude = 0.0f;
+        for (int n = 0; n < length; ++n)
+        {
+            if (n % burstLength == 0)
+            {
+                state ^= state << 13;
+                state ^= state >> 17;
+                state ^= state << 5;
+                const double unit = (double) (state >> 8) / 16777216.0;
+                amplitude = (float) std::pow (10.0, (lowDb + unit * (highDb - lowDb)) / 20.0);
+            }
+            signal[(size_t) n] = amplitude * noise[(size_t) n];
+        }
+        return signal;
+    }
+
     Signal makeAmplitudeSteps (double freqHz, const std::vector<Segment>& segments, double sampleRate)
     {
         Signal signal;

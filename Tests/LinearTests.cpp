@@ -45,17 +45,26 @@ namespace tests
         check (elsewhere < 1.0e-6, "no other sample deviates from silence (max " + std::to_string (elsewhere) + ")");
     }
 
-    // Latency is the 5 ms limiter lookahead and follows the sample rate.
+    // Latency is the 5 ms limiter lookahead, which follows the sample rate, plus the whole-sample delay that
+    // lines the dry signal up with the air path; that delay is set by the oversampling filter, not by the rate.
     static void latencyTracksSampleRate()
     {
-        section ("Linear 3: reported latency is the 5 ms lookahead at each sample rate");
+        section ("Linear 3: reported latency is the 5 ms lookahead plus a fixed alignment delay, and is the true delay at each sample rate");
+        int alignment = -1;
         for (double rate : { 44100.0, 48000.0, 96000.0 })
         {
             RenderOptions options;
             options.sampleRate = rate;
-            const auto result = render (makeSilence (64), transparentSettings(), options);
-            check (result.latency == (int) std::round (0.005 * rate),
-                   "latency at " + std::to_string ((int) rate) + " Hz is " + std::to_string (result.latency) + " samples");
+            const auto result = render (makeImpulse (4096, 100, 0.5f), transparentSettings(), options);
+            const int lookahead = (int) std::round (0.005 * rate);
+            const int extra = result.latency - lookahead;
+            if (alignment < 0)
+                alignment = extra;
+
+            check (extra > 0 && extra == alignment, "latency at " + std::to_string ((int) rate) + " Hz is " + std::to_string (result.latency)
+                                                        + " samples: " + std::to_string (lookahead) + " lookahead plus " + std::to_string (extra) + " alignment");
+            check (std::abs (result.output[(size_t) (100 + result.latency)] - 0.5f) < 1.0e-6f, "the impulse arrives at the reported latency at "
+                                                                                                    + std::to_string ((int) rate) + " Hz");
         }
     }
 

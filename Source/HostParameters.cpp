@@ -43,9 +43,17 @@ juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
         juce::AudioParameterFloatAttributes().withLabel ("%")));
 
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID { host::gateThresholdId, 1 }, "Gate Threshold",
+        juce::NormalisableRange<float> (-70.0f, -20.0f, 0.1f), defaults.gateThresholdDb,
+        juce::AudioParameterFloatAttributes().withLabel ("dB")));
+
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
         juce::ParameterID { host::limiterId, 1 }, "Limiter",
         juce::NormalisableRange<float> (-12.0f, 0.0f, 0.01f), defaults.limiterCeilingDb,
         juce::AudioParameterFloatAttributes().withLabel ("dB")));
+
+    params.push_back (std::make_unique<juce::AudioParameterBool> (
+        juce::ParameterID { host::levelTrackingId, 1 }, "Auto Level", defaults.levelTracking));
 
     return { params.begin(), params.end() };
 }
@@ -61,6 +69,8 @@ AirBandSettings readSettings (const juce::AudioProcessorValueTreeState& state)
              .deEssAmount = value (deEssId) / 100.0f,
              .compAmount = value (compId) / 100.0f,
              .gateAmount = value (gateId) / 100.0f,
-             .limiterCeilingDb = value (limiterId) };
+             .limiterCeilingDb = value (limiterId),
+             .gateThresholdDb = value (gateThresholdId),
+             .levelTracking = value (levelTrackingId) >= 0.5f };
 }
 }

@@ -6,6 +6,7 @@ namespace tests
     void runLinearTests();
     void runAirTests();
     void runDynamicsTests();
+    void runTrackingTests();
     void runPartitionTests();
     void runSafetyTests();
     void runRealtimeTests();

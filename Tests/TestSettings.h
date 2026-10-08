@@ -5,10 +5,12 @@
 // Named parameter states shared by the specifications.
 namespace tests
 {
-    // Every effect at its neutral value; only the always-present limiter lookahead remains.
+    // Every effect at its neutral value; only the always-present limiter lookahead remains. The air knees and the
+    // compressor threshold are held at their design values, so a stage switched on from here follows its static law;
+    // the tracking tests turn level tracking on.
     inline AirBandSettings transparentSettings()
     {
-        return { .blend = 0.2f, .deEssAmount = 0.0f };
+        return { .blend = 0.2f, .deEssAmount = 0.0f, .levelTracking = false };
     }
 
     inline AirBandSettings minimumSettings()

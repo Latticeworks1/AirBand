@@ -32,17 +32,41 @@ Signal flows through the controls in this order:
   compressor's makeup gain, 0-100%. At 0% it is exactly transparent;
   increasing it raises both the downward expansion ratio (up to 4:1) and
   the maximum attenuation (up to -18 dB) applied below the gate threshold.
+  The detector listens through a 100 Hz high-pass (rumble and plosive thump do
+  not hold the gate open; the audio itself is not filtered), the gain closes
+  after a 40 ms hold with a 100 ms release and opens in 2 ms, and all channels
+  share one detection level so the stereo image does not shift.
+- **Gate Thresh** — the level below which the gate expands, -70 to -20 dBFS
+  (default -40 dBFS). Set it between the noise floor and the quietest words
+  of the take; it depends on how hot the vocal was recorded.
 - **Comp** — a broadband compressor applied to the dry signal before the air
   bands, so the vocal is levelled before the treble lift is added on top,
-  0-100%. At 0% it is exactly transparent; increasing it raises both the
-  compression ratio (up to 4:1) and an automatic makeup gain (up to +6 dB)
-  together.
+  0-100%. At 0% it is exactly transparent; increasing it raises the
+  compression ratio (up to 4:1), which has a 6 dB soft knee. The threshold sits
+  3 dB below the level the material has had over the last tens of seconds
+  (its 90th percentile), and the makeup gain is the reduction applied at that
+  level, so material at that level keeps its loudness, the louder part is
+  compressed and what lies under the knee rises by up to 2.25 dB.
 - **Mid Air** — boost applied to quiet content in the ~3 kHz-and-up band, 0-15 dB.
+  The boost has fully collapsed once that band reaches 5 dB above its own
+  90th-percentile level (-26 dBFS at the design level).
 - **High Air** — boost applied to quiet content in the ~9 kHz-and-up band, 0-15 dB.
-- **De-Ess** — how much the High Air boost pulls back when that band's energy
-  is concentrated in the vocal sibilant range rather than spread across it,
-  0-100%. Keeps aggressive High Air settings from turning "S" sounds into
-  their own boosted transient.
+  The boost has fully collapsed once that band reaches 5 dB above its own
+  90th-percentile level (-38 dBFS at the design level). The dB value is
+  the boost at 100% Air Blend; at lower blends the lift is smaller (15 dB at the
+  default 20% tops out at about 5.6 dB). The editor shows what the current
+  settings add at low level at 5 kHz and 12 kHz.
+- **De-Ess** — how much of the Mid Air and High Air boost is withdrawn where the
+  signal is concentrated in the sibilant range (a 6 kHz band-pass relative to the
+  whole signal), 0-100%. Keeps aggressive Air settings from turning "S" sounds
+  into their own boosted transient. The boost is withdrawn and never turned into
+  a cut, so with both Air knobs at 0 dB De-Ess changes nothing.
+- **Auto Level** — on by default: the Air knees and the compressor threshold follow
+  the level of the material, tracked over the last tens of seconds, so a take
+  recorded 12 dB hotter or quieter meets the same behavior. Off holds them at
+  fixed design levels (the 90th percentile of a 155 s vocal recording). The
+  tracked levels depend on what has played, so after a jump of the transport they
+  stand where the earlier material left them.
 - **Air Blend** — how much of the processed bands is summed back with the dry
   signal, 0-100%. The original hardware mod ran in the 16-22% range.
 - **Output** — output trim, ±12 dB.
@@ -50,7 +74,9 @@ Signal flows through the controls in this order:
   the stages above stack up to. Sets the output ceiling, -12 to 0 dB
   (default 0 dB: a pure safety net that only engages if something upstream
   would otherwise clip). Because it looks ahead, AirBand reports a small
-  amount of latency (5 ms) to the host for plugin delay compensation.
+  amount of latency to the host for plugin delay compensation: the 5 ms
+  lookahead plus 49 samples (1.1 ms at 44.1 kHz) that line the dry signal up
+  with the air bands, so the two sum without comb filtering.
 
 ## Installing
 
@@ -127,11 +153,12 @@ input into blocks (1, 64, 128, 512, 1024, 511+1+512, 257+255+512 samples): bit f
 bit where JUCE's snap-to-zero is a no-op (arm64), and within 1e-7 on Intel CPUs,
 where JUCE zeroes oversampler filter states below 1e-8 once per processing call
 and so depends slightly on where the block cuts fall. Recorded golden vectors in
-`Tests/GoldenVectors.h` pin the exact output for twelve fixed stimuli. The golden
+`Tests/GoldenVectors.h` pin the exact output for thirteen fixed stimuli. The golden
 hashes were recorded on macOS arm64 in a release build and are compared bit for bit
 there; other platforms compare RMS to 5e-4 dB and peak to 1e-6 relative, tolerances
 set at about ten times the drift measured with fused multiply-add disabled. The
-largest drift measured on Windows (MSVC) is 4.9e-5 dB RMS and 1.2e-7 relative peak.
+largest drift measured on x86_64 (Rosetta) is 6.0e-5 dB RMS and 5.8e-7 relative peak; the
+current vectors have not yet been measured on Windows (MSVC).
 
 ```bash
 cmake -S . -B build && cmake --build build --target AirBand_Tests

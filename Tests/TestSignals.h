@@ -20,6 +20,10 @@ namespace tests
     // identical on every compiler and standard library.
     Signal makeNoise (int length, float amplitude, unsigned seed);
 
+    // Uniform noise in bursts of burstLength samples, each burst with a peak amplitude drawn uniformly in dB between
+    // lowDb and highDb (dBFS) from a fixed xorshift32 stream: program-like material whose level varies by burst.
+    Signal makeLevelBursts (int length, int burstLength, double lowDb, double highDb, unsigned seed);
+
     // Each segment is a sine of the given amplitude, back to back.
     struct Segment
     {

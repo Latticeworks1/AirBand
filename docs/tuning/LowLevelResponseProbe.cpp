@@ -2,6 +2,7 @@
 #include <cmath>
 #include <cstdio>
 #include <juce_dsp/juce_dsp.h>
+#include "AirBand.h"
 #include "Harness.h"
 #include "TestMetrics.h"
 #include "TestSettings.h"
@@ -24,8 +25,8 @@ int main()
         auto h1 = s; h1.highAirDb = 15; h1.blend = 1.0f; h1.deEssAmount = 0;
         std::printf ("%7.0f | %6.2f | %6.2f | %6.2f | %6.2f\n", f, delta (f, m2), delta (f, m1), delta (f, h2), delta (f, h1));
     }
-    juce::dsp::Oversampling<float> os { 1, 1, juce::dsp::Oversampling<float>::filterHalfBandPolyphaseIIR };
-    os.initProcessing (512);
-    std::printf ("oversampler latency: %.3f samples at base rate\n", (double) os.getLatencyInSamples());
+    AirBand band;
+    band.prepare (kDefaultRate, 512, 3000.0f, -31.0f);
+    std::printf ("air path latency: %d samples\n", band.getLatencySamples());
     return 0;
 }

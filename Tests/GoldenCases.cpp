@@ -37,6 +37,11 @@ namespace tests
         cases.push_back (make ("amplitude_steps", makeAmplitudeSteps (3000.0, { { 0.01f, 24000 }, { 0.5f, 24000 }, { 0.05f, 24000 } }, kRate),
                                featureSettings()));
 
+        // The same program with the air knees and the compressor threshold held at their design values.
+        auto pinned = featureSettings();
+        pinned.levelTracking = false;
+        cases.push_back (make ("amplitude_steps_pinned", makeAmplitudeSteps (3000.0, { { 0.01f, 24000 }, { 0.5f, 24000 }, { 0.05f, 24000 } }, kRate), pinned));
+
         RenderOptions stepped;
         stepped.steps = { { 16384, maximumSettings() }, { 32768, minimumSettings() } };
         cases.push_back (make ("parameter_steps", noise, featureSettings(), stepped));

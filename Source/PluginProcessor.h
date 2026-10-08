@@ -47,7 +47,9 @@ public:
     static constexpr auto deEssId = host::deEssId;
     static constexpr auto compId = host::compId;
     static constexpr auto gateId = host::gateId;
+    static constexpr auto gateThresholdId = host::gateThresholdId;
     static constexpr auto limiterId = host::limiterId;
+    static constexpr auto levelTrackingId = host::levelTrackingId;
 
 private:
     std::unique_ptr<AirBandDSP> dsp;
