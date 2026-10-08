@@ -38,6 +38,10 @@ public:
     // Detected level, in dBFS, below which the signal is expanded.
     void setThreshold (float thresholdDb) AIRBAND_NONBLOCKING;
 
+    // The transport jumped: the detector level, the hold and the reduction belong to audio that is no longer playing,
+    // so the gate opens. The sidechain filters keep their state.
+    void restartDynamics() AIRBAND_NONBLOCKING;
+
     void process (juce::AudioBuffer<float>& buffer) AIRBAND_NONBLOCKING;
 
 private:

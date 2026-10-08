@@ -3,6 +3,7 @@
 #include <memory>
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "HostParameters.h"
+#include "TransportMonitor.h"
 
 class AirBandDSP;
 
@@ -53,6 +54,7 @@ public:
 
 private:
     std::unique_ptr<AirBandDSP> dsp;
+    TransportMonitor transport;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AirBandAudioProcessor)
 };

@@ -36,6 +36,11 @@ public:
 
     void setLevelTracking (bool on) AIRBAND_NONBLOCKING;
 
+    // The transport jumped: the envelope follows audio that is no longer playing and is cleared, and the level
+    // tracker restarts unless the same material comes round again (a loop). The filters keep their state.
+    void restartDynamics (bool restartTracking) AIRBAND_NONBLOCKING;
+    void setTimeline (std::optional<std::int64_t> blockStart) AIRBAND_NONBLOCKING { tracker.setTimeline (blockStart); }
+
     // Processes one block, writing the band's "air" contribution (already
     // scaled by the boost/threshold law) into airOut. sibilance (0-1 per
     // sample, from SibilanceDetector) scales the boost down by deEssAmount

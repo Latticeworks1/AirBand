@@ -5,6 +5,7 @@
 #include "Harness.h"
 #include "Suites.h"
 #include "TestSettings.h"
+#include "TransportMonitor.h"
 
 // processBlock and setParameters carry the nonblocking attribute (Realtime.h). In a build with
 // -fsanitize=realtime (scripts/check_realtime.sh) the sanitizer aborts the process on any
@@ -27,8 +28,21 @@ namespace tests
 
             juce::AudioBuffer<float> buffer (channels, blockLength);
 
+            // The transport alternates between playing on, jumping about and looping, so both kinds of event are raised.
+            TransportMonitor transport;
+            transport.prepare (48000.0, 512);
+
             for (int block = 0; block < 48; ++block)
             {
+                juce::AudioPlayHead::PositionInfo position;
+                position.setIsPlaying (true);
+                position.setIsLooping (block > 24);
+                position.setTimeInSamples ((block % 12 == 7 ? 4000000 : 0) + (block % 12) * (std::int64_t) blockLength);
+                const auto event = transport.observe (position, blockLength);
+                dsp.noteTimeline (transport.blockStart());
+                if (event)
+                    dsp.noteTransportEvent (*event);
+
                 for (int ch = 0; ch < channels; ++ch)
                     std::copy (noise.begin(), noise.end(), buffer.getWritePointer (ch));
 
@@ -45,6 +59,6 @@ namespace tests
         drive (maximumSettings(), 2, 512);
         drive (featureSettings(), 1, 64);
         drive (featureSettings(), 2, 1300);
-        check (true, "48 blocks per configuration ran: stereo feature, stereo maximum, mono short, oversized");
+        check (true, "48 blocks per configuration ran, with transport events between them: stereo feature, stereo maximum, mono short, oversized");
     }
 }

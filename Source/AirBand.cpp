@@ -54,6 +54,15 @@ void AirBand::setLevelTracking (bool on) AIRBAND_NONBLOCKING
     tracker.setTracking (on);
 }
 
+void AirBand::restartDynamics (bool restartTracking) AIRBAND_NONBLOCKING
+{
+    envelope.reset();
+    if (restartTracking)
+        tracker.relocate();
+
+    refreshThreshold();
+}
+
 float AirBand::processSample (float x, float sibilance) AIRBAND_NONBLOCKING
 {
     AIRBAND_UNCHECKED_BEGIN

@@ -104,6 +104,34 @@ void AirBandDSP::setParameters (const AirBandSettings& settings) AIRBAND_NONBLOC
     }
 }
 
+void AirBandDSP::noteTimeline (std::optional<std::int64_t> blockStart) AIRBAND_NONBLOCKING
+{
+    for (auto& band : midBands)
+        band->setTimeline (blockStart);
+
+    for (auto& band : highBands)
+        band->setTimeline (blockStart);
+
+    compressor.setTimeline (blockStart);
+}
+
+void AirBandDSP::noteTransportEvent (TransportEvent event) AIRBAND_NONBLOCKING
+{
+    const bool restartTracking = event == TransportEvent::jump;
+
+    for (auto& band : midBands)
+        band->restartDynamics (restartTracking);
+
+    for (auto& band : highBands)
+        band->restartDynamics (restartTracking);
+
+    for (auto& detector : sibilanceDetectors)
+        detector.restartDynamics();
+
+    gate.restartDynamics();
+    compressor.restartDynamics (restartTracking);
+}
+
 void AirBandDSP::processBlock (juce::AudioBuffer<float>& buffer) AIRBAND_NONBLOCKING
 {
     const int numChannels = juce::jmin (buffer.getNumChannels(), preparedChannels);
@@ -115,7 +143,7 @@ void AirBandDSP::processBlock (juce::AudioBuffer<float>& buffer) AIRBAND_NONBLOC
     // The chunk views the host buffer; the external-data constructor and its destructor never allocate.
     AIRBAND_UNCHECKED_BEGIN
     for (int ch = 0; ch < numChannels; ++ch)
-        zeroNonFinite (buffer.getWritePointer (ch), numSamples);
+        sanitizeInput (buffer.getWritePointer (ch), numSamples);
 
     for (int start = 0; start < numSamples; start += preparedMaxBlockSize)
     {

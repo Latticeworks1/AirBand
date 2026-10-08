@@ -1,0 +1,114 @@
+
+=== compressor input (peak of each 10 ms) ===
+
+JUMP: 30 s of one segment, then the transport jumps to another (20 ordered pairs); mean absolute error (dB) of the reference against the new segment's own 90th percentile by time since the jump: <0.5 <2 <5 <10 <20 <30 s
+-- the new segment -12 dB
+   no restart                      12.54  12.47  12.27  11.88  11.11   9.76
+   restart, acquire 20              7.82   2.50   1.25   0.85   0.88   0.52
+   restart, acquire 30 (plugin)     8.18   2.64   1.27   0.85   0.88   0.52
+   restart, acquire 50              9.09   2.81   1.27   0.84   0.87   0.52
+   restart, acquire 100            10.32   3.68   1.33   0.83   0.87   0.52
+-- the new segment +0 dB
+   no restart                       2.33   2.25   1.98   1.64   1.32   1.00
+   restart, acquire 20              5.04   3.77   1.43   1.01   1.06   0.52
+   restart, acquire 30 (plugin)     4.52   3.55   1.46   1.02   1.06   0.52
+   restart, acquire 50              3.70   3.20   1.45   1.01   1.05   0.51
+   restart, acquire 100             2.80   2.47   1.52   1.00   1.05   0.51
+-- the new segment +12 dB
+   no restart                      11.33  10.60   6.21   2.88   1.44   0.37
+   restart, acquire 20              8.59   4.41   1.40   1.01   1.06   0.52
+   restart, acquire 30 (plugin)     8.83   4.28   1.43   1.02   1.06   0.52
+   restart, acquire 50              9.51   3.99   1.42   1.01   1.05   0.51
+   restart, acquire 100            10.48   4.02   1.50   1.00   1.05   0.51
+
+RETURN: 30 s of one segment, a jump to a segment that was never played, and a jump back to 10 s into the first (20 ordered pairs); mean absolute error (dB) against the 90th percentile of the rest of the first segment by time since the return: <0.5 <2 <5 <10 <20 s
+-- the other segment -12 dB
+   no restart                       3.02   2.69   2.22   1.55   0.61
+   restart                          7.13   3.91   1.53   1.04   0.53
+   region memory (plugin)           1.53   1.53   1.42   1.12   0.54
+-- the other segment +0 dB
+   no restart                       1.66   1.63   1.52   1.34   1.08
+   restart                          3.07   3.93   1.53   1.04   0.53
+   region memory (plugin)           1.53   1.53   1.42   1.12   0.54
+
+START: playback begins on one segment; the reference starts at the design level; same columns
+   segment -12 dB                    8.04   2.59   1.27   0.85   0.88   0.52
+   segment  +0 dB                    4.16   3.56   1.46   1.02   1.06   0.52
+   segment +12 dB                    8.95   4.33   1.43   1.02   1.06   0.52
+
+GATE: mean offset (dB) of the tracked reference from the true 90th percentile of the whole recording, taken over the time after 20 s; the recording scaled by -12, 0 and +12 dB
+   relative gate off        -0.01   -0.07   -0.10
+   relative gate 30 dB      +0.27   +0.27   +0.27
+
+PAUSE: 20 s of the recording, a pause of constant noise 40 dB under the design reference, then the recording again; reference at the end of the pause, and mean absolute error by time since resuming: <0.5 <2 <5 <20 s
+   pause  10 s, relative gate off            before  -13.1, end of pause  -14.6; after:  1.47  1.08  0.59  0.60
+   pause  10 s, relative gate 30 dB (plugin) before  -12.9, end of pause  -12.9; after:  0.19  0.41  0.55  0.14
+   pause  30 s, relative gate off            before  -13.1, end of pause  -20.5; after:  6.36  4.47  2.44  1.29
+   pause  30 s, relative gate 30 dB (plugin) before  -12.9, end of pause  -12.9; after:  0.19  0.41  0.55  0.14
+   pause  90 s, relative gate off            before  -13.1, end of pause  -32.3; after: 19.30 19.30 11.08  1.82
+   pause  90 s, relative gate 30 dB (plugin) before  -12.9, end of pause  -12.9; after:  0.19  0.41  0.55  0.14
+
+LOOP: a 16 s loop of the recording, six passes; mean absolute error (dB) of the reference against the loop's own 90th percentile by position within the pass, passes 2 to 6: <1 <4 <10 <16 s
+   loop from  10 s, truth  -17.9, no restart (loop wrap)      0.48  0.41  0.18  0.48
+   loop from  10 s, truth  -17.9, restart at each wrap       12.07  7.95  2.56  0.41
+   loop from  60 s, truth  -13.1, no restart (loop wrap)      0.31  0.52  0.36  0.15
+   loop from  60 s, truth  -13.1, restart at each wrap        1.58  1.79  0.71  0.17
+   loop from 100 s, truth  -14.6, no restart (loop wrap)      0.74  0.69  0.66  0.77
+   loop from 100 s, truth  -14.6, restart at each wrap        1.23  0.72  0.56  0.86
+
+=== 3 kHz band ===
+
+JUMP: 30 s of one segment, then the transport jumps to another (20 ordered pairs); mean absolute error (dB) of the reference against the new segment's own 90th percentile by time since the jump: <0.5 <2 <5 <10 <20 <30 s
+-- the new segment -12 dB
+   no restart                      12.22  12.04  11.62  10.87   9.60   7.78
+   restart, acquire 20              7.73   4.66   1.64   0.74   0.80   0.44
+   restart, acquire 30 (plugin)     8.05   4.77   1.64   0.74   0.80   0.44
+   restart, acquire 50              8.65   4.92   1.64   0.74   0.80   0.44
+   restart, acquire 100            10.10   5.17   1.65   0.74   0.80   0.44
+-- the new segment +0 dB
+   no restart                       3.07   2.96   2.62   1.87   1.44   0.98
+   restart, acquire 20              5.06   4.18   1.59   0.73   0.81   0.44
+   restart, acquire 30 (plugin)     4.57   4.13   1.58   0.73   0.81   0.44
+   restart, acquire 50              3.76   4.00   1.58   0.73   0.81   0.44
+   restart, acquire 100             3.11   3.46   1.58   0.73   0.81   0.44
+-- the new segment +12 dB
+   no restart                      11.55   9.85   6.24   3.42   1.65   0.93
+   restart, acquire 20              8.39   4.64   1.57   0.73   0.81   0.44
+   restart, acquire 30 (plugin)     8.72   4.57   1.56   0.73   0.81   0.44
+   restart, acquire 50              9.44   4.45   1.56   0.73   0.81   0.44
+   restart, acquire 100            10.58   4.50   1.56   0.73   0.81   0.44
+
+RETURN: 30 s of one segment, a jump to a segment that was never played, and a jump back to 10 s into the first (20 ordered pairs); mean absolute error (dB) against the 90th percentile of the rest of the first segment by time since the return: <0.5 <2 <5 <10 <20 s
+-- the other segment -12 dB
+   no restart                       4.93   4.36   3.38   2.48   1.54
+   restart                          7.39   3.55   2.04   1.72   0.54
+   region memory (plugin)           1.10   0.98   0.87   0.97   0.51
+-- the other segment +0 dB
+   no restart                       2.34   2.21   1.97   1.70   1.30
+   restart                          3.46   3.56   2.04   1.72   0.54
+   region memory (plugin)           1.10   0.98   0.87   0.97   0.51
+
+START: playback begins on one segment; the reference starts at the design level; same columns
+   segment -12 dB                    8.12   4.74   1.64   0.74   0.80   0.44
+   segment  +0 dB                    4.07   4.12   1.58   0.73   0.81   0.44
+   segment +12 dB                    8.60   4.59   1.56   0.73   0.81   0.44
+
+GATE: mean offset (dB) of the tracked reference from the true 90th percentile of the whole recording, taken over the time after 20 s; the recording scaled by -12, 0 and +12 dB
+   relative gate off        -0.05   -0.06   -0.07
+   relative gate 30 dB      +0.04   +0.04   +0.04
+
+PAUSE: 20 s of the recording, a pause of constant noise 40 dB under the design reference, then the recording again; reference at the end of the pause, and mean absolute error by time since resuming: <0.5 <2 <5 <20 s
+   pause  10 s, relative gate off            before  -29.9, end of pause  -32.3; after:  2.00  1.36  0.78  0.73
+   pause  10 s, relative gate 30 dB (plugin) before  -29.9, end of pause  -29.9; after:  0.33  0.49  0.44  0.16
+   pause  30 s, relative gate off            before  -29.9, end of pause  -37.6; after:  6.99  5.15  2.95  1.76
+   pause  30 s, relative gate 30 dB (plugin) before  -29.9, end of pause  -29.9; after:  0.33  0.49  0.44  0.16
+   pause  90 s, relative gate off            before  -29.9, end of pause  -49.0; after: 18.90 18.90  8.01  2.49
+   pause  90 s, relative gate 30 dB (plugin) before  -29.9, end of pause  -29.9; after:  0.33  0.49  0.44  0.16
+
+LOOP: a 16 s loop of the recording, six passes; mean absolute error (dB) of the reference against the loop's own 90th percentile by position within the pass, passes 2 to 6: <1 <4 <10 <16 s
+   loop from  10 s, truth  -36.3, no restart (loop wrap)      0.53  0.38  0.13  0.26
+   loop from  10 s, truth  -36.3, restart at each wrap       10.42  7.69  2.88  0.34
+   loop from  60 s, truth  -30.1, no restart (loop wrap)      0.22  0.26  0.20  0.10
+   loop from  60 s, truth  -30.1, restart at each wrap        2.98  1.15  0.46  0.24
+   loop from 100 s, truth  -32.7, no restart (loop wrap)      0.19  0.21  0.35  0.17
+   loop from 100 s, truth  -32.7, restart at each wrap        0.37  1.37  1.75  0.44

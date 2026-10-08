@@ -1,0 +1,3 @@
+ceiling 0 dB: sample peak 0.00 dBFS, true peak 0.18 dBFS, excess over the ceiling 0.18 dB
+ceiling -1 dB: sample peak -1.00 dBFS, true peak -0.82 dBFS, excess over the ceiling 0.18 dB
+ceiling -3 dB: sample peak -3.00 dBFS, true peak -2.54 dBFS, excess over the ceiling 0.46 dB

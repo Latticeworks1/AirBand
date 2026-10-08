@@ -1,11 +1,12 @@
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
+#include <optional>
 #include <string>
 #include <vector>
 
 #include "AirBandDSP.h"
 #include "Check.h"
-#include "EnvelopeDetector.h"
 #include "Harness.h"
 #include "LevelTracker.h"
 #include "SibilanceDetector.h"
@@ -28,6 +29,19 @@ namespace tests
             const float level = gainOf (levelDb);
             for (int i = 0; i < (int) (seconds * kRate); ++i)
                 tracker.push (level);
+            return tracker.referenceDb();
+        }
+
+        // Feeds 10 ms levels of base - 12 u dB, u pseudo-random in [0, 1), for the given time; the reference ends near base - 1.2 dB.
+        float playIrregular (LevelTracker& tracker, double baseDb, double seconds, std::uint32_t& state)
+        {
+            for (int k = 0; k < (int) (seconds * 100.0); ++k)
+            {
+                state = state * 1664525u + 1013904223u;
+                const float level = gainOf (baseDb - 12.0 * (double) (state >> 8) / 16777216.0);
+                for (int i = 0; i < 441; ++i)
+                    tracker.push (level);
+            }
             return tracker.referenceDb();
         }
 
@@ -154,25 +168,13 @@ namespace tests
             check (std::abs (VocalCompressor::gainReductionDb (-10.0f, threshold, 4.0f) - 0.75f * 20.0f) < 1.0e-4f, "20 dB over the threshold at 4:1 is reduced by 15 dB");
             check (VocalCompressor::gainReductionDb (-10.0f, threshold, 1.0f) == 0.0f, "1:1 never reduces");
 
-            // Held at the design reference, a level there passes at unity gain (the reduction at the reference is the makeup).
-            // The follower's reading of a sine is found by running the follower itself.
-            EnvelopeDetector follower;
-            follower.prepare (kRate, 0.005f, 0.005f, 0.1f);
-            const auto probe = makeSine (1000.0, 0.1f, (int) (3.0 * kRate));
-            double reading = 0.0;
-            for (size_t i = 0; i < probe.size(); ++i)
-            {
-                const float level = follower.pushSample (std::abs (probe[i]));
-                if (i >= probe.size() - 441)
-                    reading += (double) level / 441.0;
-            }
-
+            // Held at the design reference, a tone whose peak is at that level passes at unity gain (the reduction at the
+            // reference is the makeup).
             auto settings = transparentSettings();
             settings.compAmount = 1.0f;
-            const double amplitude = 0.1 * std::pow (10.0, (double) VocalCompressor::kDesignReferenceDb / 20.0) / reading;
-            const auto input = makeSine (1000.0, (float) amplitude, (int) (2.0 * kRate));
+            const auto input = makeSine (1000.0, gainOf (VocalCompressor::kDesignReferenceDb), (int) (2.0 * kRate));
             const double delta = rmsDb (render (input, settings).output, (int) kRate) - rmsDb (render (input, transparentSettings()).output, (int) kRate);
-            check (std::abs (delta) <= 0.3, "a tone whose follower reading is the design reference passes within 0.3 dB of unity gain (" + std::to_string (delta) + " dB)");
+            check (std::abs (delta) <= 0.3, "a tone whose peak is the design reference passes within 0.3 dB of unity gain (" + std::to_string (delta) + " dB)");
         }
 
         section ("Tracking 5: the sibilance measure separates fricative noise from voiced content and does not depend on level");
@@ -233,6 +235,97 @@ namespace tests
                 }
             }
             check (worst <= 0.15, "the predicted and the measured gain agree within 0.15 dB at every frequency tried (worst " + std::to_string (worst) + " dB)");
+        }
+
+        section ("Tracking 7: after a restart the reference holds, then moves to the new level within seconds, and a new signal is acquired as fast");
+        {
+            LevelTracker restarted, control;
+            restarted.prepare (kRate, -40.0f);
+            control.prepare (kRate, -40.0f);
+            settle (restarted, -30.0, 60.0);
+            settle (control, -30.0, 60.0);
+
+            restarted.restart();
+            const float before = restarted.referenceDb();
+            const float level = gainOf (-42.0);
+            restarted.push (level);
+            for (int i = 1; i < (int) (0.01 * kRate); ++i)
+                restarted.push (level);
+            check (std::abs (restarted.referenceDb() - before) <= 0.1f, "the reference does not step when the tracker restarts (moved "
+                                                                           + std::to_string (restarted.referenceDb() - before) + " dB in the first update)");
+
+            const float after = settle (restarted, -42.0, 1.0), stale = settle (control, -42.0, 1.0);
+            check (std::abs (after - -42.0f) <= 1.5f, "one second after the restart the reference is within 1.5 dB of the new level (" + std::to_string (after) + " dB)");
+            check (stale >= -34.0f, "a tracker that is not restarted is still near the old level at that time (" + std::to_string (stale) + " dB)");
+
+            LevelTracker fresh;
+            fresh.prepare (kRate, -30.0f);
+            const float started = settle (fresh, -45.0, 1.0);
+            check (std::abs (started - -45.0f) <= 1.5f, "a tracker that starts on material 15 dB under its design level reaches it within 1.5 dB in one second (" + std::to_string (started) + " dB)");
+        }
+
+        section ("Tracking 8: levels far under the reference are not activity, except while acquiring after a restart");
+        {
+            LevelTracker tracker;
+            tracker.prepare (kRate, -40.0f);
+            const float settled = settle (tracker, -30.0, 30.0);
+            const float paused = settle (tracker, -62.0, 90.0);
+            check (std::abs (paused - settled) <= 0.1f, "90 s at a level 32 dB under the reference leave it where it was (" + std::to_string (settled) + " to " + std::to_string (paused) + " dB)");
+            const float resumed = settle (tracker, -30.0, 0.5);
+            check (std::abs (resumed - settled) <= 0.5f, "and when the material returns the reference is right at once (" + std::to_string (resumed) + " dB after 0.5 s)");
+
+            const float lowered = settle (tracker, -50.0, 90.0);
+            check (lowered <= -45.0f, "a level 20 dB under the reference is activity, so the reference follows material that really got quieter (" + std::to_string (lowered) + " dB)");
+
+            LevelTracker restarted;
+            restarted.prepare (kRate, -50.0f);
+            settle (restarted, -35.0, 60.0);
+            restarted.restart();
+            const float acquired = settle (restarted, -66.0, 2.0);
+            check (std::abs (acquired - -66.0f) <= 1.5f, "after a restart material 31 dB under the old reference is acquired (" + std::to_string (acquired) + " dB)");
+        }
+
+        section ("Tracking 9: switching tracking on again discards the history from before tracking was off");
+        {
+            LevelTracker tracker;
+            tracker.prepare (kRate, -40.0f);
+            settle (tracker, -30.0, 60.0);
+            tracker.setTracking (false);
+            settle (tracker, -50.0, 60.0);
+            tracker.setTracking (true);
+            const float back = settle (tracker, -50.0, 1.0);
+            check (std::abs (back - -50.0f) <= 2.0f, "one second after tracking resumes the reference is near the current level, not the one from before (" + std::to_string (back) + " dB)");
+        }
+
+        section ("Tracking 10: a jump to a region of the timeline that was played takes up what the tracker learned there");
+        {
+            const auto at = [] (double seconds) { return std::optional<std::int64_t> ((std::int64_t) (seconds * kRate)); };
+            std::uint32_t state = 12345u;
+            LevelTracker tracker;
+            tracker.prepare (kRate, -20.0f);
+            tracker.setTimeline (at (0.0));
+            const float home = playIrregular (tracker, -20.0, 40.0, state);
+            tracker.setTimeline (at (400.0));
+            tracker.relocate();
+            const float elsewhere = playIrregular (tracker, -32.0, 30.0, state);
+            check (std::abs (elsewhere - home) > 8.0f, "the material at 400 s is far under the material at the start (" + std::to_string (elsewhere) + " against " + std::to_string (home) + " dB)");
+
+            tracker.setTimeline (at (20.0));
+            tracker.relocate();
+            const float back = playIrregular (tracker, -20.0, 0.5, state);
+            check (std::abs (back - home) <= 1.0f, "half a second after a return to a played region the reference is the one the region taught (" + std::to_string (back) + " against " + std::to_string (home) + " dB)");
+
+            tracker.setTimeline (at (300.0));
+            tracker.relocate();
+            const float fresh = playIrregular (tracker, -30.0, 5.0, state);
+            check (std::abs (fresh - -31.2f) <= 2.5f, "a jump more than 10 s from any played region restarts, and the reference follows the new level (" + std::to_string (fresh) + " dB)");
+
+            LevelTracker unclocked;
+            unclocked.prepare (kRate, -20.0f);
+            playIrregular (unclocked, -20.0, 40.0, state);
+            unclocked.relocate();
+            const float restarted = playIrregular (unclocked, -32.0, 5.0, state);
+            check (std::abs (restarted - -33.2f) <= 2.5f, "without a timeline a jump restarts (" + std::to_string (restarted) + " dB)");
         }
     }
 }

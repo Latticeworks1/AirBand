@@ -22,6 +22,7 @@ namespace tests
         juce::AudioBuffer<float> buffer (options.channels, widest);
 
         size_t nextStep = 0;
+        size_t nextEvent = 0;
         size_t position = 0;
         size_t blockIndex = 0;
 
@@ -32,6 +33,9 @@ namespace tests
 
             if (nextStep < options.steps.size() && (int) position >= options.steps[nextStep].atSample)
                 dsp.setParameters (options.steps[nextStep++].settings);
+
+            if (nextEvent < options.events.size() && (int) position >= options.events[nextEvent].atSample)
+                dsp.noteTransportEvent (options.events[nextEvent++].event);
 
             buffer.setSize (options.channels, length, false, false, true);
             for (int ch = 0; ch < options.channels; ++ch)

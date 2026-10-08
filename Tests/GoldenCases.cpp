@@ -46,6 +46,12 @@ namespace tests
         stepped.steps = { { 16384, maximumSettings() }, { 32768, minimumSettings() } };
         cases.push_back (make ("parameter_steps", noise, featureSettings(), stepped));
 
+        // The transport jumps twice and loops once: the dynamics start over each time and the trackers at the jumps.
+        RenderOptions transported;
+        transported.events = { { 20000, TransportEvent::jump }, { 40000, TransportEvent::loopWrap }, { 60000, TransportEvent::jump } };
+        cases.push_back (make ("transport_events", makeAmplitudeSteps (3000.0, { { 0.01f, 24000 }, { 0.5f, 24000 }, { 0.05f, 24000 } }, kRate),
+                               featureSettings(), transported));
+
         cases.push_back (make ("block_edge_transients", edgeTransients(), featureSettings()));
         cases.push_back (make ("sustained_10s", makeSine (5000.0, 0.3f, 10 * kSecond, kRate), featureSettings()));
         cases.push_back (make ("settings_minimum", noise, minimumSettings()));

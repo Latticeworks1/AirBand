@@ -6,6 +6,7 @@
 #include "AirBandDSP.h"
 #include "Check.h"
 #include "Harness.h"
+#include "Sanitize.h"
 #include "Suites.h"
 #include "TestMetrics.h"
 #include "TestSettings.h"
@@ -107,6 +108,11 @@ namespace tests
                 auto spiked = input;
                 spiked[10000] = big;
                 check (allFinite (render (spiked, featureSettings()).output), "output stays finite after a " + std::to_string (big) + " sample");
+
+                auto clamped = input;
+                clamped[10000] = big > 0.0f ? kMaxInputMagnitude : -kMaxInputMagnitude;
+                check (countDifferent (render (spiked, featureSettings()).output, render (clamped, featureSettings()).output) == 0,
+                       "a " + std::to_string (big) + " sample is limited to +-" + std::to_string (kMaxInputMagnitude) + " (80 dBFS)");
             }
             check (countDifferent (expected, render (input, featureSettings()).output) == 0, "finite input is unaffected");
         }

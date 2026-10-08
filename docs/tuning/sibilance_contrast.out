@@ -1,0 +1,28 @@
+frames active 6471, sibilant 280, voiced 5714
+
+old: 6k BP / total (ratio)  AUC 0.973  sibilant P10/P50/P90 0.10 0.39 0.60  voiced P50/P90/P99 0.03 0.05 0.16
+   white -40 dBFS       median    0.35 | above  99.7% of voiced,  42.1% of sibilant frames
+   pink -40 dBFS        median    0.24 | above  99.4% of voiced,  27.5% of sibilant frames
+   tone 3000 Hz -30 dBFS median    0.14 | above  98.9% of voiced,  14.3% of sibilant frames
+   tone 5000 Hz -30 dBFS median    0.73 | above 100.0% of voiced,  99.6% of sibilant frames
+   tone 7000 Hz -30 dBFS median    0.78 | above 100.0% of voiced, 100.0% of sibilant frames
+   tone 10000 Hz -30 dBFS median    0.19 | above  99.2% of voiced,  20.0% of sibilant frames
+   tone 12000 Hz -30 dBFS median    0.09 | above  97.6% of voiced,   7.9% of sibilant frames
+
+new: L5-10k - L1-5k (dB)  AUC 0.948  sibilant P10/P50/P90 -10.18 -0.09 6.76  voiced P50/P90/P99 -16.39 -9.45 -2.32
+   white -40 dBFS       median    1.00 | above  99.4% of voiced,  55.7% of sibilant frames
+   pink -40 dBFS        median   -3.68 | above  98.7% of voiced,  33.9% of sibilant frames
+   tone 3000 Hz -30 dBFS median  -32.80 | above   0.8% of voiced,   0.7% of sibilant frames
+   tone 5000 Hz -30 dBFS median    0.00 | above  99.3% of voiced,  50.4% of sibilant frames
+   tone 7000 Hz -30 dBFS median   17.45 | above 100.0% of voiced,  99.6% of sibilant frames
+   tone 10000 Hz -30 dBFS median   32.39 | above 100.0% of voiced, 100.0% of sibilant frames
+   tone 12000 Hz -30 dBFS median   26.01 | above 100.0% of voiced, 100.0% of sibilant frames
+
+hybrid: new + (L5-10k - total) (dB)  AUC 0.970  sibilant P10/P50/P90 -25.71 -6.10 5.01  voiced P50/P90/P99 -46.79 -34.68 -17.44
+   white -40 dBFS       median   -5.37 | above  99.6% of voiced,  51.4% of sibilant frames
+   pink -40 dBFS        median  -14.22 | above  99.3% of voiced,  27.5% of sibilant frames
+   tone 3000 Hz -30 dBFS median  -65.60 | above   8.8% of voiced,   0.7% of sibilant frames
+   tone 5000 Hz -30 dBFS median   -3.01 | above  99.7% of voiced,  61.8% of sibilant frames
+   tone 7000 Hz -30 dBFS median   17.45 | above 100.0% of voiced,  99.6% of sibilant frames
+   tone 10000 Hz -30 dBFS median   29.38 | above 100.0% of voiced, 100.0% of sibilant frames
+   tone 12000 Hz -30 dBFS median    6.14 | above 100.0% of voiced,  91.8% of sibilant frames

@@ -6,6 +6,7 @@
 #include "AirBand.h"
 #include "Realtime.h"
 #include "AirBandSettings.h"
+#include "TransportMonitor.h"
 #include "VocalCompressor.h"
 #include "SibilanceDetector.h"
 #include "VocalGate.h"
@@ -23,6 +24,15 @@ public:
     // dry signal (gate first, then compressor); limiterCeilingDb is the final
     // lookahead limiter, applied after everything including output gain.
     void setParameters (const AirBandSettings& settings) AIRBAND_NONBLOCKING;
+
+    // The host's transport jumped between this block and the last (see TransportMonitor). The gate, the compressor's
+    // reduction, the air envelopes and the sibilance levels follow audio that is no longer playing and start over.
+    // The level trackers start over as well, since the material may be a different part of the song, except after a
+    // loop wrap, which brings the same material round again and keeps what they have learned of it.
+    // The position on the host's timeline of the first sample of the next block, if the host reports one. Called before
+    // each block and before noteTransportEvent, so that a jump can take up what the trackers learned at the new position.
+    void noteTimeline (std::optional<std::int64_t> blockStart) AIRBAND_NONBLOCKING;
+    void noteTransportEvent (TransportEvent event) AIRBAND_NONBLOCKING;
 
     // Block sizes up to the prepared maximum run in one pass; larger blocks
     // are processed in prepared-size chunks, and channels beyond the

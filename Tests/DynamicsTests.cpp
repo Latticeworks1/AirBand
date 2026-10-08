@@ -145,5 +145,74 @@ namespace tests
             const double change = toneDb (right, 1000.0, kDefaultRate, kSettle) - toneDb (quiet, 1000.0, kDefaultRate, kSettle);
             check (std::abs (change) <= 0.5, "the quiet channel keeps its level while the other channel is loud (" + std::to_string (change) + " dB)");
         }
+
+        section ("Dynamics 8: the compressor's attack and release are the same in dB at every level, and it does not distort a low tone");
+        {
+            const int rate = (int) kDefaultRate;
+            auto on = transparentSettings();
+            on.compAmount = 1.0f;
+
+            // A 1 kHz tone steps from -30 dBFS to a louder level at 0.5 s and back at 1.5 s. The applied reduction is the
+            // level change of the compressed tone relative to the uncompressed one, with the makeup gain taken off, read
+            // from the peak of each millisecond.
+            const auto reductionTrace = [&] (float stepDb)
+            {
+                const auto input = makeAmplitudeSteps (1000.0, { { 0.0316f, rate / 2 }, { (float) std::pow (10.0, stepDb / 20.0), rate }, { 0.0316f, rate } });
+                const auto compressed = render (input, on);
+                const auto plain = render (input, transparentSettings());
+                const double makeup = VocalCompressor::gainReductionDb (VocalCompressor::kDesignReferenceDb, VocalCompressor::kDesignReferenceDb - VocalCompressor::kThresholdBelowReferenceDb, 4.0f);
+                const int ms = rate / 1000;
+                std::vector<double> trace;
+                for (size_t start = (size_t) compressed.latency; start + (size_t) ms < compressed.output.size(); start += (size_t) ms)
+                {
+                    const Samples a (compressed.output.begin() + (long) start, compressed.output.begin() + (long) start + ms);
+                    const Samples b (plain.output.begin() + (long) start, plain.output.begin() + (long) start + ms);
+                    trace.push_back (makeup - (20.0 * std::log10 (peak (a) / std::max (peak (b), 1.0e-9))));
+                }
+                return trace;
+            };
+
+            // The traces start at the reported latency, where the first input sample emerges.
+            const auto at = [] (const std::vector<double>& trace, double seconds) { return trace[(size_t) std::lround (seconds * 1000.0)]; };
+
+            for (const float stepDb : { -10.0f, -4.0f })
+            {
+                const auto trace = reductionTrace (stepDb);
+                const double settled = at (trace, 1.4);
+                const double early = at (trace, 0.5 + 0.001), later = at (trace, 0.5 + 0.010);
+                const double released = at (trace, 1.5 + 0.100), gone = at (trace, 1.5 + 0.800);
+                check (settled > 1.0, "a step to " + std::to_string (stepDb) + " dBFS is reduced by " + std::to_string (settled) + " dB once settled");
+                check (early <= 0.15 * settled && later >= 0.7 * settled, "the reduction builds in a few milliseconds: " + std::to_string (early / settled) + " of the final after 1 ms, "
+                                                                           + std::to_string (later / settled) + " after 10 ms");
+                check (released / settled >= 0.25 && released / settled <= 0.5 && gone <= 0.02 * settled, "and lets go over a few hundred: " + std::to_string (released / settled) + " of it remains after 100 ms, "
+                                                                           + std::to_string (gone / settled) + " after 800 ms");
+            }
+
+            const auto remaining = [&] (float stepDb)
+            {
+                const auto trace = reductionTrace (stepDb);
+                return at (trace, 1.6) / at (trace, 1.4);
+            };
+            check (std::abs (remaining (-10.0f) - remaining (-4.0f)) <= 0.05, "the fraction left 100 ms after the level falls is the same for a 20 dB step and a 26 dB step ("
+                                                                                   + std::to_string (remaining (-10.0f)) + " and " + std::to_string (remaining (-4.0f)) + ")");
+
+            // The harmonics (2nd to 8th) of a 100 Hz tone at -6 dBFS and of a 60 Hz tone, relative to the fundamental.
+            const auto harmonicsDb = [&] (double frequency)
+            {
+                const auto output = render (makeSine (frequency, 0.5f, 4 * rate), on).output;
+                const int cycles = (int) frequency;
+                const int length = (int) std::lround ((double) cycles * kDefaultRate / frequency);
+                const int start = 2 * rate;
+                const Samples window (output.begin() + start, output.begin() + start + length);
+                const double fundamental = std::pow (10.0, toneDb (window, frequency, kDefaultRate) / 10.0);
+                double harmonics = 0.0;
+                for (int k = 2; k <= 8; ++k)
+                    harmonics += std::pow (10.0, toneDb (window, k * frequency, kDefaultRate) / 10.0);
+                return 10.0 * std::log10 (harmonics / fundamental);
+            };
+            const double at100 = harmonicsDb (100.0), at60 = harmonicsDb (60.0);
+            check (at100 <= -55.0, "the harmonics of a 100 Hz tone at -6 dBFS are " + std::to_string (at100) + " dB under it");
+            check (at60 <= -48.0, "and those of a 60 Hz tone " + std::to_string (at60) + " dB under it");
+        }
     }
 }

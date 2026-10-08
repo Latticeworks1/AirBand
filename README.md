@@ -42,11 +42,14 @@ Signal flows through the controls in this order:
 - **Comp** — a broadband compressor applied to the dry signal before the air
   bands, so the vocal is levelled before the treble lift is added on top,
   0-100%. At 0% it is exactly transparent; increasing it raises the
-  compression ratio (up to 4:1), which has a 6 dB soft knee. The threshold sits
-  3 dB below the level the material has had over the last tens of seconds
-  (its 90th percentile), and the makeup gain is the reduction applied at that
-  level, so material at that level keeps its loudness, the louder part is
-  compressed and what lies under the knee rises by up to 2.25 dB.
+  compression ratio (up to 4:1), which has a 6 dB soft knee. It reads the
+  waveform's peaks in dB and smooths the reduction it calls for in dB, with a
+  5 ms attack and a 100 ms release that are the same at every level. The
+  threshold sits 3 dB below the level the peaks of the material have had over
+  the last tens of seconds (their 90th percentile), and the makeup gain is the
+  reduction applied at that level, so material at that level keeps its
+  loudness, the louder part is compressed and what lies under the knee rises by
+  up to 2.25 dB.
 - **Mid Air** — boost applied to quiet content in the ~3 kHz-and-up band, 0-15 dB.
   The boost has fully collapsed once that band reaches 5 dB above its own
   90th-percentile level (-26 dBFS at the design level).
@@ -64,9 +67,15 @@ Signal flows through the controls in this order:
 - **Auto Level** — on by default: the Air knees and the compressor threshold follow
   the level of the material, tracked over the last tens of seconds, so a take
   recorded 12 dB hotter or quieter meets the same behavior. Off holds them at
-  fixed design levels (the 90th percentile of a 155 s vocal recording). The
-  tracked levels depend on what has played, so after a jump of the transport they
-  stand where the earlier material left them.
+  fixed design levels (the 90th percentile of a 155 s vocal recording). Levels
+  more than 30 dB below the tracked level (pauses, room noise) do not count. When the
+  host reports that its transport jumped (a locate, a scrub, a start from
+  another position) the tracked levels return to what they learned there if
+  that part of the timeline was played within the last two minutes, and else
+  start over and settle on the new material within a few seconds; the compressor, gate and air
+  envelopes are cleared; a loop wrap keeps them, since the same material comes
+  round again. A host that reports no position gives the plugin nothing to detect
+  a jump with, and Auto Level off removes the dependence on what has played.
 - **Air Blend** — how much of the processed bands is summed back with the dry
   signal, 0-100%. The original hardware mod ran in the 16-22% range.
 - **Output** — output trim, ±12 dB.
@@ -147,17 +156,18 @@ scripts/build_installer.sh    # .pkg installer, run after package_macos.sh
 plugin host involved. Stimuli (`TestSignals`), measurements (`TestMetrics`) and
 specifications are separate files. The specifications cover linear behaviour
 (unity pass-through, impulse response, reported latency), the air bands, the
-gate, compressor and limiter, and safety (extreme input, oversized blocks,
+gate, compressor and limiter, the level tracking and the response to the host's
+transport (jumps, loop wraps, stops), and safety (extreme input, oversized blocks,
 channel counts). Output must also be the same for every way of cutting the
 input into blocks (1, 64, 128, 512, 1024, 511+1+512, 257+255+512 samples): bit for
 bit where JUCE's snap-to-zero is a no-op (arm64), and within 1e-7 on Intel CPUs,
 where JUCE zeroes oversampler filter states below 1e-8 once per processing call
 and so depends slightly on where the block cuts fall. Recorded golden vectors in
-`Tests/GoldenVectors.h` pin the exact output for thirteen fixed stimuli. The golden
+`Tests/GoldenVectors.h` pin the exact output for fourteen fixed stimuli. The golden
 hashes were recorded on macOS arm64 in a release build and are compared bit for bit
 there; other platforms compare RMS to 5e-4 dB and peak to 1e-6 relative, tolerances
 set at about ten times the drift measured with fused multiply-add disabled. The
-largest drift measured on x86_64 (Rosetta) is 6.0e-5 dB RMS and 5.8e-7 relative peak; the
+largest drift measured on x86_64 (Rosetta) is 1.2e-5 dB RMS and 8.6e-7 relative peak; the
 current vectors have not yet been measured on Windows (MSVC).
 
 ```bash

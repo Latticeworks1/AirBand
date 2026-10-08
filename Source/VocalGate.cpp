@@ -55,6 +55,15 @@ void VocalGate::setThreshold (float newThresholdDb) AIRBAND_NONBLOCKING
     thresholdDb = newThresholdDb;
 }
 
+void VocalGate::restartDynamics() AIRBAND_NONBLOCKING
+{
+    for (auto& detector : detectors)
+        detector.reset();
+
+    reductionDb = 0.0f;
+    holdRemaining = 0;
+}
+
 float VocalGate::nextGain (float detectedLevel) AIRBAND_NONBLOCKING
 {
     const float levelDb = juce::Decibels::gainToDecibels (detectedLevel, -100.0f);

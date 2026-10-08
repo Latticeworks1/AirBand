@@ -17,6 +17,7 @@ AirBandAudioProcessor::~AirBandAudioProcessor() = default;
 void AirBandAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     dsp->prepare (sampleRate, samplesPerBlock, getTotalNumInputChannels());
+    transport.prepare (sampleRate, samplesPerBlock);
 
     // The output limiter uses lookahead, which delays the signal; report
     // it so the host applies plugin delay compensation instead of AirBand
@@ -27,6 +28,7 @@ void AirBandAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBloc
 void AirBandAudioProcessor::releaseResources()
 {
     dsp->reset();
+    transport.reset();
 }
 
 bool AirBandAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
@@ -43,6 +45,21 @@ bool AirBandAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) 
 void AirBandAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer&)
 {
     juce::ScopedNoDenormals noDenormals;
+
+    // A block that does not continue the last one (a locate, a scrub, a loop wrap) starts audio that the trackers and
+    // smoothers have not been following.
+    std::optional<TransportEvent> event;
+    std::optional<std::int64_t> blockStart;
+    if (auto* playHead = getPlayHead())
+        if (const auto position = playHead->getPosition())
+        {
+            event = transport.observe (*position, buffer.getNumSamples());
+            blockStart = transport.blockStart();
+        }
+
+    dsp->noteTimeline (blockStart);
+    if (event)
+        dsp->noteTransportEvent (*event);
 
     dsp->setParameters (host::readSettings (apvts));
     dsp->processBlock (buffer);

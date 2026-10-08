@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "AirBandSettings.h"
+#include "TransportMonitor.h"
 #include "TestSignals.h"
 
 // Runs a signal through the production AirBandDSP in host-style blocks.
@@ -15,6 +16,13 @@ namespace tests
         AirBandSettings settings;
     };
 
+    // At the first block starting at or after `atSample`, the DSP is told that the transport did this.
+    struct TransportStep
+    {
+        int atSample;
+        TransportEvent event;
+    };
+
     struct RenderOptions
     {
         double sampleRate = kDefaultRate;
@@ -24,6 +32,7 @@ namespace tests
         // Block lengths cycled through until the input is consumed.
         std::vector<int> partition = { 512 };
         std::vector<ParameterStep> steps;
+        std::vector<TransportStep> events;
     };
 
     struct Render

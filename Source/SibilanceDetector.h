@@ -35,6 +35,14 @@ public:
         totalLevel.reset();
     }
 
+    // The transport jumped: the levels follow audio that is no longer playing. The filters keep their state, which
+    // rings out within a millisecond.
+    void restartDynamics() AIRBAND_NONBLOCKING
+    {
+        bandLevel.reset();
+        totalLevel.reset();
+    }
+
     float process (float x) AIRBAND_NONBLOCKING
     {
         AIRBAND_UNCHECKED_BEGIN

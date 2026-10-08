@@ -123,6 +123,7 @@ if (AIRBAND_BUILD_TESTS)
             Tests/AirTests.cpp
             Tests/DynamicsTests.cpp
             Tests/TrackingTests.cpp
+            Tests/TransportTests.cpp
             Tests/PartitionTests.cpp
             Tests/SafetyTests.cpp
             Tests/RealtimeTests.cpp

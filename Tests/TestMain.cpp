@@ -18,6 +18,7 @@ int main (int argc, char** argv)
     tests::runAirTests();
     tests::runDynamicsTests();
     tests::runTrackingTests();
+    tests::runTransportTests();
     tests::runPartitionTests();
     tests::runSafetyTests();
     tests::runRealtimeTests();

@@ -3,13 +3,12 @@
 void VocalCompressor::prepare (double sampleRate, int numChannels)
 {
     sr = sampleRate;
+    attackCoeff = std::exp (-1.0f / (kAttackSeconds * (float) sr));
+    releaseCoeff = std::exp (-1.0f / (kReleaseSeconds * (float) sr));
 
     channels.assign ((size_t) numChannels, Channel());
     for (auto& channel : channels)
-    {
-        channel.detector.prepare (sr, 0.005f, 0.005f, 0.1f); // 5 ms attack, 100 ms release, no separate peak catch
         channel.tracker.prepare (sr, kDesignReferenceDb);
-    }
 
     reset();
 }
@@ -18,8 +17,24 @@ void VocalCompressor::reset()
 {
     for (auto& channel : channels)
     {
-        channel.detector.reset();
         channel.tracker.reset();
+        channel.blockPeak = 0.0f;
+        channel.heldDb = 0.0f;
+        channel.reductionDb = 0.0f;
+        refresh (channel);
+    }
+}
+
+void VocalCompressor::restartDynamics (bool restartTracking) AIRBAND_NONBLOCKING
+{
+    for (auto& channel : channels)
+    {
+        if (restartTracking)
+            channel.tracker.relocate();
+
+        channel.blockPeak = 0.0f;
+        channel.heldDb = 0.0f;
+        channel.reductionDb = 0.0f;
         refresh (channel);
     }
 }
@@ -65,14 +80,30 @@ void VocalCompressor::setLevelTracking (bool on) AIRBAND_NONBLOCKING
 
 float VocalCompressor::processSample (float x, Channel& channel) const AIRBAND_NONBLOCKING
 {
-    const float envelope = channel.detector.pushSample (std::abs (x));
-    if (channel.tracker.push (envelope))
+    const float magnitude = std::abs (x);
+
+    // The tracker takes the largest magnitude of its 10 ms interval; push() returns true on the update that used it.
+    channel.blockPeak = juce::jmax (channel.blockPeak, magnitude);
+    if (channel.tracker.push (channel.blockPeak))
+    {
+        channel.blockPeak = 0.0f;
         refresh (channel);
+    }
 
-    const float levelDb = juce::Decibels::gainToDecibels (envelope, -100.0f);
-    const float gainReduction = gainReductionDb (levelDb, channel.thresholdDb, ratio);
+    const float required = gainReductionDb (juce::Decibels::gainToDecibels (magnitude, kLevelFloorDb), channel.thresholdDb, ratio);
 
-    return x * juce::Decibels::decibelsToGain (-gainReduction) * channel.makeupLinear;
+    channel.heldDb = juce::jmax (required, releaseCoeff * channel.heldDb + (1.0f - releaseCoeff) * required);
+    channel.reductionDb = attackCoeff * channel.reductionDb + (1.0f - attackCoeff) * channel.heldDb;
+
+    // The smoothing approaches zero only asymptotically; settle it so a compressor that is idle (or off) is exactly unity.
+    if (channel.heldDb < 1.0e-6f)
+    {
+        channel.heldDb = 0.0f;
+        if (channel.reductionDb < 1.0e-6f)
+            channel.reductionDb = 0.0f;
+    }
+
+    return x * juce::Decibels::decibelsToGain (-channel.reductionDb) * channel.makeupLinear;
 }
 
 void VocalCompressor::process (juce::AudioBuffer<float>& buffer) AIRBAND_NONBLOCKING

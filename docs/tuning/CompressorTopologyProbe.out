@@ -1,0 +1,33 @@
+follower 5/100 ms, at 10 ms        P5  -64.5  P25  -31.1  P50  -24.2  P68  -21.6  P75  -20.8  P90  -18.6  P95  -17.5  P99  -15.7  max  -13.6
+peak of each 10 ms                 P5  -97.2  P25  -40.9  P50  -21.9  P68  -18.0  P75  -16.8  P90  -14.3  P95  -12.9  P99  -10.6  max   -7.4
+instantaneous |x| at 10 ms (aliased) P5 -111.8  P25  -57.4  P50  -37.4  P68  -30.8  P75  -28.3  P90  -22.8  P95  -20.0  P99  -16.1  max   -8.6
+
+Recording at 100 percent (ratio 4:1, 6 dB knee, makeup 2.25 dB): 50 ms frame levels in dBFS and the applied gain reduction
+variant                            | frame level P10  P50  P90  P99  max | P99-P50 | median change | reduction mean, P50, P90, P99, share >1 dB
+input                              |  -79.3 -29.1 -23.1 -20.2 -17.9 |   8.8
+linear follower (0bd7078)          |  -77.0 -27.0 -22.8 -21.5 -19.9 |   5.6 | +2.02 | 0.64 0.01 2.22 4.36 23.6%
+peak, branching 5/100 ms           |  -77.0 -26.9 -21.6 -19.6 -18.1 |   7.3 | +2.13 | 0.28 0.10 0.82 1.92 7.1%
+peak, decoupled 5/100 ms           |  -77.0 -27.3 -23.1 -21.5 -20.0 |   5.8 | +1.77 | 0.89 0.41 2.60 4.85 31.7%
+peak, branching 5/100, T=-19.3     |  -77.0 -27.1 -22.3 -20.5 -19.0 |   6.6 | +1.95 | 0.56 0.28 1.56 2.96 20.6%
+peak, decoupled 5/100, T=-19.3     |  -77.1 -27.8 -24.2 -22.8 -21.1 |   5.0 | +1.26 | 1.48 0.92 3.89 6.26 48.2%
+peak, decoupled 10/100, T=-17.3    |  -77.0 -27.3 -23.1 -21.4 -19.8 |   5.9 | +1.74 | 0.89 0.42 2.58 4.79 31.9%
+peak, decoupled 5/200, T=-17.3     |  -77.4 -27.6 -23.3 -21.7 -20.3 |   5.9 | +1.47 | 1.19 0.79 3.01 5.12 43.5%
+
+Harmonic distortion (2nd to 8th harmonic relative to the fundamental, dB) of a steady tone at 100 percent; 1 s analysed after 2 s
+variant                            |   60Hz/ -6  100Hz/ -6  100Hz/-12  200Hz/ -6  200Hz/-12  500Hz/ -6 1000Hz/ -6
+linear follower (0bd7078)          |      -44.1      -48.5      -48.5      -54.5      -54.5      -62.5      -68.4
+peak, branching 5/100 ms           |      -41.8      -46.2      -50.0      -52.2      -56.0      -60.2      -66.2
+peak, decoupled 5/100 ms           |      -52.6      -61.1      -65.2      -73.0      -77.0      -88.7     -100.8
+peak, branching 5/100, T=-19.3     |      -41.3      -45.7      -48.2      -51.7      -54.2      -59.6      -65.6
+peak, decoupled 5/100, T=-19.3     |      -52.0      -60.5      -63.3      -72.3      -75.1      -88.1     -100.1
+peak, decoupled 10/100, T=-17.3    |      -58.5      -67.1      -71.2      -79.0      -83.1      -94.8     -106.8
+peak, decoupled 5/200, T=-17.3     |      -58.4      -67.0      -71.1      -78.9      -83.0      -94.7     -106.8
+
+Step response of the reduction (dB) for 1 kHz stepping from -30 to -10 dBFS at t=0 and back at 1 s: reduction at 1, 2, 5, 10, 20, 50, 100, 300 ms; release: reduction 20, 50, 100, 200, 400, 800 ms after the step down
+linear follower (0bd7078)          |  0.72  1.82  4.24  6.00  7.27  8.02  8.13  8.13 |  6.92  5.16  2.35  0.00  0.00  0.00
+peak, branching 5/100 ms           |  0.97  1.36  2.27  3.22  4.13  4.78  4.87  4.88 |  3.99  2.96  1.79  0.66  0.09  0.00
+peak, decoupled 5/100 ms           |  1.70  2.38  3.77  4.84  5.38  5.46  5.46  5.46 |  4.71  3.49  2.12  0.78  0.11  0.00
+peak, branching 5/100, T=-19.3     |  1.34  1.88  3.10  4.33  5.46  6.21  6.31  6.32 |  5.17  3.83  2.32  0.85  0.12  0.00
+peak, decoupled 5/100, T=-19.3     |  2.18  3.04  4.81  6.17  6.86  6.96  6.96  6.96 |  6.00  4.45  2.70  0.99  0.13  0.00
+peak, decoupled 10/100, T=-17.3    |  0.93  1.36  2.42  3.62  4.79  5.43  5.46  5.46 |  4.89  3.68  2.23  0.82  0.11  0.00
+peak, decoupled 5/200, T=-17.3     |  1.70  2.38  3.77  4.85  5.38  5.47  5.47  5.47 |  5.07  4.37  3.40  2.06  0.76  0.10
