@@ -161,3 +161,73 @@ if (AIRBAND_BUILD_TESTS)
     add_test(NAME AirBandDSPTests COMMAND AirBand_Tests)
     add_test(NAME AirBandHostTests COMMAND AirBand_HostTests)
 endif()
+
+# The updater and installer: a separate executable, since a plugin loaded into a host cannot replace itself.
+# airband_updater_core holds all decisions and verification and is exercised without a network; the
+# AirBand_Updater command line adds the real HTTPS fetcher. See docs/UPDATER.md.
+option(AIRBAND_BUILD_UPDATER "Build the AirBand updater and its tests" ON)
+
+if (AIRBAND_BUILD_UPDATER)
+    add_library(airband_updater_core STATIC
+        Updater/Version.cpp
+        Updater/Release.cpp
+        Updater/Platform.cpp
+        Updater/Installed.cpp
+        Updater/Decision.cpp
+        Updater/Digest.cpp
+        Updater/Updater.cpp
+    )
+
+    if (APPLE)
+        target_sources(airband_updater_core PRIVATE Updater/MacInstall.cpp)
+    endif()
+
+    target_include_directories(airband_updater_core PUBLIC Updater)
+
+    target_compile_definitions(airband_updater_core
+        PUBLIC
+            JUCE_WEB_BROWSER=0
+            JUCE_USE_CURL=0
+    )
+
+    target_link_libraries(airband_updater_core
+        PUBLIC
+            juce::juce_core
+            juce::juce_cryptography
+            juce::juce_recommended_config_flags
+            juce::juce_recommended_warning_flags
+    )
+
+    juce_add_console_app(AirBand_Updater
+        PRODUCT_NAME "AirBand Updater"
+    )
+
+    target_sources(AirBand_Updater
+        PRIVATE
+            Updater/Cli/Main.cpp
+            Updater/Cli/JuceFetcher.cpp
+    )
+
+    target_include_directories(AirBand_Updater PRIVATE Updater/Cli)
+    target_link_libraries(AirBand_Updater PRIVATE airband_updater_core)
+
+    juce_add_console_app(AirBand_UpdaterTests
+        PRODUCT_NAME "AirBand Updater Tests"
+    )
+
+    target_sources(AirBand_UpdaterTests
+        PRIVATE
+            Tests/UpdaterTestMain.cpp
+            Tests/Check.cpp
+            Tests/UpdaterLogicTests.cpp
+            Tests/UpdaterFetchTests.cpp
+            Tests/UpdaterInstalledTests.cpp
+            Tests/UpdaterInstallTests.cpp
+    )
+
+    target_include_directories(AirBand_UpdaterTests PRIVATE Tests)
+    target_link_libraries(AirBand_UpdaterTests PRIVATE airband_updater_core)
+
+    enable_testing()
+    add_test(NAME AirBandUpdaterTests COMMAND AirBand_UpdaterTests)
+endif()
