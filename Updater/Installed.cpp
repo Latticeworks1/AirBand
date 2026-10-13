@@ -47,7 +47,7 @@ namespace updater
         return std::nullopt;
     }
 
-    Inspection inspect (Os os, Scope scope, const juce::File& base)
+    Inspection inspect (Os os, Scope scope, const juce::File& base, const RegistryReader& registry)
     {
         Inspection result;
 
@@ -63,10 +63,17 @@ namespace updater
                     if (! installed.version)
                         installed.problem = "Info.plist has no readable CFBundleShortVersionString";
                 }
+                else if (! registry)
+                {
+                    installed.problem = "no registry reader was supplied";
+                }
                 else
                 {
-                    // The Windows installer records its version in the uninstall registry key; reading it is not implemented yet.
-                    installed.problem = "installed-version detection on Windows is not implemented";
+                    const auto text = registry (kWindowsInstalledVersionPath);
+                    installed.version = parseVersion (text);
+                    if (! installed.version)
+                        installed.problem = text.empty() ? "no AirBand uninstall record in the registry, so it was not installed by the AirBand setup program"
+                                                         : "the uninstall record's DisplayVersion \"" + text + "\" is not major.minor.patch";
                 }
             }
 
@@ -76,10 +83,11 @@ namespace updater
         return result;
     }
 
-    std::optional<Scope> detectScope (Os os, const juce::File& userBase, const juce::File& systemBase, std::string& error)
+    std::optional<Scope> detectScope (Os os, const juce::File& userBase, const juce::File& systemBase, std::string& error,
+                                      const RegistryReader& registry)
     {
-        const bool inUser = inspect (os, Scope::user, userBase).anyPresent();
-        const bool inSystem = inspect (os, Scope::system, systemBase).anyPresent();
+        const bool inUser = inspect (os, Scope::user, userBase, registry).anyPresent();
+        const bool inSystem = inspect (os, Scope::system, systemBase, registry).anyPresent();
 
         if (inUser && inSystem)
         {

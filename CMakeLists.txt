@@ -176,10 +176,16 @@ if (AIRBAND_BUILD_UPDATER)
         Updater/Decision.cpp
         Updater/Digest.cpp
         Updater/Updater.cpp
+        Updater/WindowsSetup.cpp
     )
 
     if (APPLE)
         target_sources(airband_updater_core PRIVATE Updater/MacInstall.cpp)
+    endif()
+
+    if (WIN32)
+        target_sources(airband_updater_core PRIVATE Updater/WindowsNative.cpp)
+        target_link_libraries(airband_updater_core PUBLIC shell32)
     endif()
 
     target_include_directories(airband_updater_core PUBLIC Updater)
@@ -223,9 +229,11 @@ if (AIRBAND_BUILD_UPDATER)
             Tests/UpdaterFetchTests.cpp
             Tests/UpdaterInstalledTests.cpp
             Tests/UpdaterInstallTests.cpp
+            Tests/UpdaterWindowsTests.cpp
     )
 
     target_include_directories(AirBand_UpdaterTests PRIVATE Tests)
+    target_compile_definitions(AirBand_UpdaterTests PRIVATE AIRBAND_REPO_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
     target_link_libraries(AirBand_UpdaterTests PRIVATE airband_updater_core)
 
     enable_testing()

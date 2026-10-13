@@ -1,0 +1,86 @@
+name: Updater
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "Updater/**"
+      - "Tests/Updater*"
+      - "installer/**"
+      - "docs/UPDATER.md"
+      - "CMakeLists.txt"
+      - ".github/workflows/updater.yml"
+  pull_request:
+    paths:
+      - "Updater/**"
+      - "Tests/Updater*"
+      - "installer/**"
+      - "docs/UPDATER.md"
+      - "CMakeLists.txt"
+      - ".github/workflows/updater.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -B build -A x64 -DCMAKE_BUILD_TYPE=Release -DAIRBAND_COPY_AFTER_BUILD=OFF
+
+      - name: Build the updater and its tests
+        run: cmake --build build --config Release --target AirBand_UpdaterTests AirBand_Updater -j 4
+
+      - name: Run the updater tests
+        shell: bash
+        run: build/AirBand_UpdaterTests_artefacts/Release/AirBand_UpdaterTests.exe
+
+      - name: Install the latest release with the updater
+        shell: pwsh
+        run: |
+          $cli = "build/AirBand_Updater_artefacts/Release/AirBand_Updater.exe"
+          $dll = "$env:CommonProgramFiles\VST3\AirBand.vst3\Contents\x86_64-win\AirBand.vst3"
+          function Run($expected, [string[]]$arguments) {
+            & $cli @arguments
+            if ($LASTEXITCODE -ne $expected) { throw "$arguments exited with $LASTEXITCODE, expected $expected" }
+          }
+          Run 0 @('status')
+          Run 10 @('check')
+          Run 0 @('install')
+          if (-not (Test-Path $dll)) { throw "plugin not installed at $dll" }
+          Run 0 @('status')
+          Run 0 @('check')
+          Run 0 @('install')
+          Get-Item $dll | Select-Object -ExpandProperty VersionInfo | Format-List FileVersion, ProductVersion
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DAIRBAND_COPY_AFTER_BUILD=OFF
+
+      - name: Build the updater and its tests
+        run: cmake --build build --target AirBand_UpdaterTests AirBand_Updater -j 4
+
+      - name: Run the updater tests
+        run: build/AirBand_UpdaterTests_artefacts/Release/AirBand_UpdaterTests
+
+      - name: Install the latest release into a scratch prefix
+        run: |
+          cli=build/AirBand_Updater_artefacts/Release/AirBand_Updater
+          prefix="$RUNNER_TEMP/prefix"
+          mkdir -p "$prefix"
+          "$cli" status --prefix "$prefix"
+          set +e
+          "$cli" check --prefix "$prefix"; test $? -eq 10 || { echo "expected exit 10" >&2; exit 1; }
+          set -e
+          "$cli" install --prefix "$prefix"
+          "$cli" check --prefix "$prefix"
+          "$cli" install --prefix "$prefix"

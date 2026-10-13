@@ -7,4 +7,5 @@ namespace tests
     void runUpdaterFetchTests();
     void runUpdaterInstalledTests();
     void runUpdaterInstallTests();
+    void runUpdaterWindowsTests();
 }

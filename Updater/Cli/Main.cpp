@@ -5,8 +5,14 @@
 #include "JuceFetcher.h"
 #include "Updater.h"
 
+#include "WindowsSetup.h"
+
 #if defined(__APPLE__)
  #include "MacInstall.h"
+#endif
+
+#if defined(_WIN32)
+ #include "WindowsNative.h"
 #endif
 
 // airband-updater status  [--scope user|system] [--prefix DIR]
@@ -18,6 +24,15 @@ namespace
 {
     using namespace updater;
 
+    const char* const usage =
+        "usage: airband-updater status|check|install [--scope user|system] [--prefix DIR] [--repo owner/name] [--force] [--dry-run]\n"
+        "  status   print where AirBand is installed and which version\n"
+        "  check    also compare with the latest release; exits 10 when an install or update is available\n"
+        "  install  download, verify and install the latest release (--dry-run stops before the download)\n"
+        "  --scope  user or system; by default the scope that already holds AirBand (macOS user, Windows system)\n"
+        "  --prefix redirect every path to DIR, for tests (macOS only; Windows installs to the shared folder)\n"
+        "  --force  reinstall the same version, or replace a newer development build\n";
+
     struct Options
     {
         std::string command;
@@ -26,6 +41,7 @@ namespace
         std::string repo = "Latticeworks1/AirBand";
         bool force = false;
         bool dryRun = false;
+        bool help = false;
     };
 
     struct Context
@@ -33,8 +49,10 @@ namespace
         Os os = hostOs();
         Scope scope = Scope::user;
         juce::File userBase, systemBase;
+        RegistryReader registry;
 
         juce::File base() const { return scope == Scope::user ? userBase : systemBase; }
+        Inspection inspect() const { return updater::inspect (os, scope, base(), registry); }
     };
 
     int fail (const std::string& message)
@@ -47,11 +65,23 @@ namespace
     {
         if (argc < 2)
         {
-            error = "usage: airband-updater status|check|install [--scope user|system] [--prefix DIR] [--repo owner/name] [--force] [--dry-run]";
+            error = std::string ("a command is required\n") + usage;
             return false;
         }
 
         options.command = argv[1];
+
+        if (options.command == "--help" || options.command == "-h" || options.command == "help")
+        {
+            options.help = true;
+            return true;
+        }
+
+        if (options.command != "status" && options.command != "check" && options.command != "install")
+        {
+            error = "unknown command " + options.command + "\n" + usage;
+            return false;
+        }
 
         for (int i = 2; i < argc; ++i)
         {
@@ -84,6 +114,16 @@ namespace
 
     bool resolve (const Options& options, Context& context, std::string& error)
     {
+#if defined(_WIN32)
+        if (options.prefix)
+        {
+            error = "--prefix is not supported on Windows: the setup program writes the shared VST3 folder and the registry";
+            return false;
+        }
+
+        context.registry = readRegistryValue;
+#endif
+
         context.userBase = options.prefix.value_or (juce::File::getSpecialLocation (juce::File::userHomeDirectory));
         context.systemBase = options.prefix.value_or (context.os == Os::macOS ? juce::File ("/")
                                                                               : juce::File::getSpecialLocation (juce::File::globalApplicationsDirectory).getChildFile ("Common Files"));
@@ -101,7 +141,7 @@ namespace
             return true;
         }
 
-        const auto scope = detectScope (context.os, context.userBase, context.systemBase, error);
+        const auto scope = detectScope (context.os, context.userBase, context.systemBase, error, context.registry);
         if (scope)
             context.scope = *scope;
         return scope.has_value();
@@ -118,7 +158,8 @@ namespace
         }
     }
 
-    int install (const Context& context, const Options& options, const Release& release, const Inspection& inspection, Action action)
+    // Downloads the asset into a scratch directory, checks it against the release, and hands it to the platform's installer.
+    int install (const Context& context, const Options& options, const Release& release, Action action)
     {
         if (action == Action::upToDate && ! options.force)
             return std::printf ("AirBand %s is already installed\n", toString (release.version).c_str()), 0;
@@ -131,7 +172,10 @@ namespace
         if (asset == nullptr)
             return fail ("release " + release.tag + " has no installer asset for this platform and scope");
 
-        if (context.os != Os::macOS || context.scope != Scope::user)
+        const bool macUser = context.os == Os::macOS && context.scope == Scope::user;
+        const bool windowsSystem = context.os == Os::windows && context.scope == Scope::system;
+
+        if (! macUser && ! windowsSystem)
             return fail ("installing " + asset->name + " is not implemented yet; download " + asset->url);
 
         std::printf ("%s AirBand %s from %s (%lld bytes)\n", options.dryRun ? "would install" : "installing", toString (release.version).c_str(),
@@ -139,28 +183,39 @@ namespace
         if (options.dryRun)
             return 0;
 
-#if defined(__APPLE__)
         JuceFetcher fetcher;
         const auto staging = juce::File::getSpecialLocation (juce::File::tempDirectory).getNonexistentChildFile ("AirBand-Updater", "", false);
-        const auto zip = staging.getChildFile (asset->name);
+        const auto file = staging.getChildFile (asset->name);
+        const auto log = juce::File::getSpecialLocation (juce::File::tempDirectory).getChildFile ("AirBand-setup.log");
         std::string error;
 
-        const bool installed = downloadVerified (fetcher, *asset, zip, error) && installUserBundles (zip, context.base(), release.version, error);
+        bool installed = downloadVerified (fetcher, *asset, file, error);
+
+        if (installed && macUser)
+        {
+#if defined(__APPLE__)
+            installed = installUserBundles (file, context.base(), release.version, error);
+#endif
+        }
+        else if (installed && windowsSystem)
+        {
+#if defined(_WIN32)
+            installed = runSetup (file, log, runElevated, error);
+#endif
+        }
+
         staging.deleteRecursively();
         if (! installed)
             return fail (error);
 
-        const auto after = inspect (context.os, context.scope, context.base());
+        // Only the installed state confirms what is now on disk.
+        const auto after = context.inspect();
         if (after.oldest() != release.version)
             return fail ("after installing, the plugin folder does not report " + toString (release.version));
 
+        log.deleteFile();
         printInspection (context, after);
-        (void) inspection;
         return 0;
-#else
-        (void) inspection;
-        return fail ("this build cannot install on this platform");
-#endif
     }
 }
 
@@ -172,17 +227,20 @@ int main (int argc, char** argv)
         Context context;
         std::string error;
 
-        if (! parseOptions (argc, argv, options, error) || ! resolve (options, context, error))
+        if (! parseOptions (argc, argv, options, error))
             return fail (error);
 
-        const auto inspection = inspect (context.os, context.scope, context.base());
+        if (options.help)
+            return std::fputs (usage, stdout), 0;
+
+        if (! resolve (options, context, error))
+            return fail (error);
+
+        const auto inspection = context.inspect();
         printInspection (context, inspection);
 
         if (options.command == "status")
             return 0;
-
-        if (options.command != "check" && options.command != "install")
-            return fail ("unknown command " + options.command);
 
         if (inspection.anyUnreadable())
             return fail ("an installed bundle's version cannot be read; remove it or reinstall by hand");
@@ -198,6 +256,6 @@ int main (int argc, char** argv)
         if (options.command == "check")
             return (action == Action::install || action == Action::update) ? 10 : 0;
 
-        return install (context, options, *release, inspection, action);
+        return install (context, options, *release, action);
     }
 }
