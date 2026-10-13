@@ -41,6 +41,8 @@ jobs:
 
       - name: Install the latest release with the updater
         shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           $cli = "build/AirBand_Updater_artefacts/Release/AirBand_Updater.exe"
           $dll = "$env:CommonProgramFiles\VST3\AirBand.vst3\Contents\x86_64-win\AirBand.vst3"
@@ -73,6 +75,8 @@ jobs:
         run: build/AirBand_UpdaterTests_artefacts/Release/AirBand_UpdaterTests
 
       - name: Install the latest release into a scratch prefix
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cli=build/AirBand_Updater_artefacts/Release/AirBand_Updater
           prefix="$RUNNER_TEMP/prefix"

@@ -4,9 +4,19 @@ std::unique_ptr<juce::InputStream> JuceFetcher::open (const std::string& url, bo
 {
     int status = 0;
 
+    // The unauthenticated API allows sixty requests an hour per address, which shared CI runners exhaust. A token in
+    // GITHUB_TOKEN raises that limit; it goes to the API host only, never to the asset downloads that redirect elsewhere.
+    juce::String headers = "User-Agent: AirBand-Updater\r\n";
+    const auto token = juce::SystemStats::getEnvironmentVariable ("GITHUB_TOKEN", {});
+    if (wantJson)
+    {
+        headers << "Accept: application/vnd.github+json\r\n";
+        if (token.isNotEmpty() && url.rfind ("https://api.github.com/", 0) == 0)
+            headers << "Authorization: Bearer " << token << "\r\n";
+    }
+
     const auto options = juce::URL::InputStreamOptions (juce::URL::ParameterHandling::inAddress)
-                             .withExtraHeaders (wantJson ? "User-Agent: AirBand-Updater\r\nAccept: application/vnd.github+json\r\n"
-                                                         : "User-Agent: AirBand-Updater\r\n")
+                             .withExtraHeaders (headers)
                              .withConnectionTimeoutMs (20000)
                              .withNumRedirectsToFollow (5)
                              .withStatusCode (&status);
@@ -15,6 +25,8 @@ std::unique_ptr<juce::InputStream> JuceFetcher::open (const std::string& url, bo
     if (stream == nullptr || status != 200)
     {
         error = "GET " + url + (status == 0 ? " got no response" : " answered HTTP " + std::to_string (status));
+        if (status == 403 || status == 429)
+            error += "; GitHub limits unauthenticated requests per address, set GITHUB_TOKEN to raise the limit";
         return nullptr;
     }
 
